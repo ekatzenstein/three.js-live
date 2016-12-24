@@ -1,0 +1,46 @@
+//Google Fonts
+@import url(https://fonts.googleapis.com/css?family=Droid+Serif|Open+Sans|Raleway|Roboto|Space+Mono|Inconsolata); // Font Variables
+$roboto_slab: 'Roboto', sans-serif;
+$open_sans: 'Open Sans', sans-serif;
+$space_mono: 'Space Mono', monospace;
+$raleway: 'Raleway', sans-serif;
+$droid_serif: 'Droid Serif', serif;
+$inconsolata: 'Inconsolata', monospace;
+
+body {
+    margin: 0;
+    padding: 0;
+}
+
+a {
+    font-family: $raleway;
+    color: #2194CE;
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+.sidebarTitle {
+    padding-left: 15px;
+    padding-right: 15px;
+    font-family: $raleway;
+    font-size: 30px;
+    line-height: 80px;
+}
+
+.linkList {
+    padding-left: 15px;
+    font-family: $raleway;
+    font-size: 20px;
+    line-height: 45px;
+
+    .link {
+        padding-left: 20px;
+        font-family: $inconsolata;
+        font-size: 18px;
+        line-height: 24px;
+        display: block;
+    }
+}
