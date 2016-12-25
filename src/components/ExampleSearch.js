@@ -20,7 +20,7 @@ const styles = {
 
 function ExampleSearch(props){
   return(
-    <div style={{textAlign:'left'}} className='sidebarTitle'>
+    <div style={{textAlign:'left', paddingTop:'15px'}} className='sidebarTitle'>
       <TextField
           fullWidth = {true}
           hintText="search examples..."

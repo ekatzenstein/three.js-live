@@ -7,7 +7,7 @@ import ExampleList from './ExampleList';
 import ExampleSearch from './ExampleSearch';
 
 
-export default class DrawerOpenRightExample extends React.Component {
+export default class ExampleDrawer extends React.Component {
 
   constructor(props) {
     super(props);
@@ -26,19 +26,18 @@ export default class DrawerOpenRightExample extends React.Component {
   }
 
   render() {
+    const left = window.innerWidth*this.props.left;
     return (
       <div>
-        <RaisedButton label="Toggle Drawer" onClick={this._handleToggle}/>
           <Drawer
           className='sidebar'
-          width={window.innerWidth*.45}
+          width={left}
           openSecondary={false}
           open={this.state.open}
-          overlayStyle={{fontSize:'20px'}}>
-          {//<AppBar title="AppBar" />
-        }
-
-          <RaisedButton label="Toggle Drawer" onClick={this._handleToggle}/>
+          overlayStyle={{fontSize:'20px'}}
+          containerStyle={{position: 'absolute', top: `${this.props.hh}px`, height: `calc(100% - ${this.props.hh}px)`, zIndex:4}}
+          zDepth={2}
+          >
           <ExampleSearch search={this.props.search}/>
           <ExampleList files={this.props.files} search={this.props.searchVal}/>
         </Drawer>

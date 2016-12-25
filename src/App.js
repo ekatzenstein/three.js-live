@@ -3,20 +3,22 @@ import axios from 'axios';
 
 import logo from './logo.svg';
 import './App.css';
-import Codemirror from 'react-codemirror';
 
-require('codemirror/lib/codemirror.css'); //css install for code editor
-require('codemirror/mode/htmlmixed/htmlmixed');
+
 
 
 import ExampleSearch from './components/ExampleSearch';
-import Drawer from './components/Drawer';
+import ExampleDrawer from './components/ExampleDrawer';
+import CodeDrawer from './components/CodeDrawer';
 import Header from './components/Header';
 
 import getMuiTheme from 'material-ui/styles/getMuiTheme';
 import baseTheme from 'material-ui/styles/baseThemes/lightBaseTheme';
 
 
+
+const fixed_left=.25;
+const headerHeight=80;
 class App extends Component {
     componentWillReceiveProps(nextProps) {
         var routeChanged = nextProps.location.pathname !== this.props.location.pathname;
@@ -26,11 +28,20 @@ class App extends Component {
 
     }
     getChildContext() {
-       return { muiTheme: getMuiTheme(baseTheme) };
+      const mainTheme = getMuiTheme(baseTheme);
+      mainTheme.slider.selectionColor='#2194CE'
+       return { muiTheme: mainTheme };
    }
 
    _sidebarToggle(){
-      this.setState({sidebar:!this.state.sidebar})
+      const left = this.state.sb ? 0 : fixed_left;
+      this.setState({sb:!this.state.sb, left})
+   }
+   _codeToggle(){
+      this.setState({cb:!this.state.cb})
+   }
+   _cbTransparency(event,value){
+      this.setState({codeBlockTransparency:value})
    }
     _getFiles() {
         const _this = this;
@@ -52,12 +63,15 @@ class App extends Component {
         super();
         this.state = {
             code: 'no code loaded',
-            readOnly: false,
-            mode: 'htmlmixed',
             exampleFiles: {},
             search: '',
             updateScene: false,
-            sidebar:true
+            sb:true,
+            cb:true,
+            headerHeight:headerHeight,
+            left:fixed_left,
+            top:headerHeight/window.innerHeight,
+            codeBlockTransparency:.75
         }
 
         this._updateCode = this._updateCode.bind(this);
@@ -65,8 +79,9 @@ class App extends Component {
         this._getFiles = this._getFiles.bind(this);
         this._searchHandler = this._searchHandler.bind(this);
         this._sidebarToggle = this._sidebarToggle.bind(this);
+        this._codeToggle = this._codeToggle.bind(this);
+        this._cbTransparency = this._cbTransparency.bind(this);
         this._getFiles();
-
     }
     _updateCode(newCode) {
         this.setState({code: newCode, updateScene: true});
@@ -81,7 +96,7 @@ class App extends Component {
     componentDidUpdate() {
 
         if (this.state.updateScene) {
-            console.log(this.props.location.pathname)
+            // console.log(this.props.location.pathname)
 
             this._updateCanvas();
             this.setState({updateScene: false})
@@ -104,21 +119,59 @@ class App extends Component {
     componentDidMount() {}
 
     render() {
-        var options = {
-            lineNumbers: true,
-            readOnly: this.state.readOnly,
-            mode: this.state.mode
-        };
+
         return (
             <div className="App">
-               <Header sbToggle = {this._sidebarToggle} sb={this.state.sidebar}/>
-                <iframe id="preview" width="80%" style={{
-                    position: 'absolute'
-                }}></iframe>
+               <div style={{zIndex:2}}>
+               <iframe id="preview" width="100%" height='100% 'style={{
+                   position: 'absolute',
+                   zIndex:0
+               }}></iframe>
+               </div>
+            <Header
 
-             <Drawer files={this.state.exampleFiles} searchVal={this.state.search} search={this._searchHandler} sidebar = {this.state.sidebar}/>
-                <Codemirror ref="editor" value={this.state.code} onChange={this._updateCode} options={options} interact={this.interact} height="10px"/>
-            </div>
+               transparency={this.state.codeBlockTransparency}
+
+               cbToggle = {this._codeToggle}
+
+               sbToggle = {this._sidebarToggle}
+               sb={this.state.sb}
+               cb={this.state.cb}
+               height = {this.state.headerHeight}/>
+
+
+
+
+             <ExampleDrawer
+               files={this.state.exampleFiles}
+               searchVal={this.state.search}
+               search={this._searchHandler}
+               sidebar = {this.state.sb}
+               left={this.state.left}
+               leftMin={this.state.leftMin}
+               hh = {this.state.headerHeight}
+             />
+          <CodeDrawer
+             transparency={this.state.codeBlockTransparency}
+             cbTransparency={this._cbTransparency}
+              files={this.state.exampleFiles}
+              searchVal={this.state.search}
+              search={this._searchHandler}
+              sidebar = {this.state.cb}
+              left={this.state.left}
+              leftMin={this.state.leftMin}
+              hh = {this.state.headerHeight}
+              top={this.state.top}
+
+              value={this.state.code}
+              updateCode={this._updateCode}
+              interact={this.interact}
+
+            />
+          {
+
+         }
+         </div>
         );
     }
 }

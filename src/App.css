@@ -1,7 +1,20 @@
 @import url(https://fonts.googleapis.com/css?family=Droid+Serif|Open+Sans|Raleway|Roboto|Space+Mono|Inconsolata);
+.CodeMirror {
+  border: 1px solid #eee;
+  height: auto !important;
+  font-family: "Inconsolata", monospace !important; }
+
 body {
   margin: 0;
-  padding: 0; }
+  padding: 0;
+  overflow: hidden !important; }
+
+.header {
+  font-family: "Raleway", sans-serif;
+  color: #2194CE;
+  font-size: 15px;
+  line-height: 15px;
+  text-align: center; }
 
 a {
   font-family: "Raleway", sans-serif;
@@ -10,6 +23,9 @@ a {
 
 a:hover {
   text-decoration: underline; }
+
+.sidebar {
+  width: 100%; }
 
 .sidebarTitle {
   padding-left: 15px;
@@ -25,7 +41,7 @@ a:hover {
   line-height: 45px; }
   .linkList .link {
     padding-left: 20px;
-    font-family: "Inconsolata", monospace;
+    font-family: "Inconsolata", monospace !important;
     font-size: 18px;
     line-height: 24px;
     display: block; }

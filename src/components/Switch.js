@@ -6,38 +6,38 @@ const styles = {
     maxWidth: 250,
   },
   toggle: {
-    marginBottom: 16,
+    marginBottom: 0,
   },
   thumbOff: {
-    backgroundColor: '#ffcccc',
+    backgroundColor: 'gray',
   },
   trackOff: {
-    backgroundColor: '#ff9d9d',
+    backgroundColor: 'lightgray',
   },
   thumbSwitched: {
-    backgroundColor: 'red',
+    backgroundColor: '#2194CE',
   },
   trackSwitched: {
-    backgroundColor: '#ff9d9d',
-  },
-  labelStyle: {
-    color: 'red',
-  },
+    backgroundColor: 'lightsteelblue',
+  }
 };
 
-const Switch = (props) => (
+const Switch = (props) => {
+const col = props.open?'#2194CE':'gray';
+return(
   <div style={styles.block}>
     <Toggle
-      label="Styling"
-      defaultToggled={props.sb}
+      label={props.title}
+      defaultToggled={props.open}
       thumbStyle={styles.thumbOff}
       trackStyle={styles.trackOff}
       thumbSwitchedStyle={styles.thumbSwitched}
       trackSwitchedStyle={styles.trackSwitched}
-      labelStyle={styles.labelStyle}
-      onToggle = {props.sbToggle}
+      labelStyle={{fontFamily: "'Raleway', sans-serif",fontSize:"16px", color: col}}
+      onToggle = {props.toggle}
     />
   </div>
-);
+)
+};
 
 export default Switch;

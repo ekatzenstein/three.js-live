@@ -1,17 +1,32 @@
 //Google Fonts
 @import url(https://fonts.googleapis.com/css?family=Droid+Serif|Open+Sans|Raleway|Roboto|Space+Mono|Inconsolata); // Font Variables
+
+
 $roboto_slab: 'Roboto', sans-serif;
 $open_sans: 'Open Sans', sans-serif;
 $space_mono: 'Space Mono', monospace;
 $raleway: 'Raleway', sans-serif;
 $droid_serif: 'Droid Serif', serif;
-$inconsolata: 'Inconsolata', monospace;
+$inconsolata: 'Inconsolata', monospace !important;
+
+.CodeMirror {
+  border: 1px solid #eee;
+  height: auto !important;
+  font-family:$inconsolata;
+}
 
 body {
     margin: 0;
     padding: 0;
+    overflow:hidden !important;
 }
-
+.header{
+  font-family: $raleway;
+  color: #2194CE;
+  font-size:15px;
+  line-height:15px;
+  text-align:center;
+}
 a {
     font-family: $raleway;
     color: #2194CE;
@@ -21,7 +36,9 @@ a {
 a:hover {
     text-decoration: underline;
 }
-
+.sidebar{
+  width:100%;
+}
 .sidebarTitle {
     padding-left: 15px;
     padding-right: 15px;
