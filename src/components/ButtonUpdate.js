@@ -1,21 +1,30 @@
 import React from 'react';
 import FloatingActionButton from 'material-ui/FloatingActionButton';
 import ContentAdd from 'material-ui/svg-icons/action/autorenew';
-const style = {
-  margin: 'auto',
-  textAlign:'center',
-  marginTop:'30px'
-};
 
-/**
- * Default size and `mini` FABs, in primary (default), `secondary` and `disabled` colors.
- */
+const style={
+  parentDivStyle:{
+    margin: 'auto',
+    textAlign:'center',
+    marginTop:'30px'
+  },
+  fabStyle:{
+    pointerEvents:'all'
+  }
+}
+
 const FloatingActionButtonExampleSimple = (props) => (
-  <div style={style}>
-    <FloatingActionButton  mini={true} zDepth={1} backgroundColor={"#2194CE"} style={{pointerEvents:'all'}} onClick={props.refresh}>
+  <div style={style.parentDivStyle}>
+    <FloatingActionButton
+      mini={true}
+      zDepth={1}
+      backgroundColor={"#2194CE"}
+      style={style.fabStyle}
+      onClick={props.refresh}
+    >
       <ContentAdd/>
     </FloatingActionButton>
-    </div>
+  </div>
 );
 
 export default FloatingActionButtonExampleSimple;

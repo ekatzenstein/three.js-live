@@ -1,7 +1,6 @@
 import React from 'react';
 import TextField from 'material-ui/TextField';
 
-
 const styles = {
   underlineStyle: {
     borderColor: '#2194CE',
@@ -22,7 +21,7 @@ function ExampleSearch(props){
   return(
     <div style={{textAlign:'left', paddingTop:'15px'}} className='sidebarTitle'>
       <TextField
-          fullWidth = {true}
+          fullWidth={true}
           hintText="search examples..."
           underlineFocusStyle={styles.underlineStyle}
           hintStyle={styles.textHint}

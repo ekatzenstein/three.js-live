@@ -1,5 +1,5 @@
 //Google Fonts
-@import url(https://fonts.googleapis.com/css?family=Droid+Serif|Open+Sans|Raleway|Roboto|Space+Mono|Inconsolata); // Font Variables
+// @import url(https://fonts.googleapis.com/css?family=Droid+Serif|Open+Sans|Raleway|Roboto|Space+Mono|Inconsolata); // Font Variables
 
 
 $roboto_slab: 'Roboto', sans-serif;
@@ -28,6 +28,9 @@ $inconsolata: 'Inconsolata', monospace;
     cursor:pointer;
 }
 
+iframe{
+  border:none !important;
+}
 
 .CodeMirror {
   border: none;
