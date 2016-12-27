@@ -1,8 +1,33 @@
 @import url(https://fonts.googleapis.com/css?family=Droid+Serif|Open+Sans|Raleway|Roboto|Space+Mono|Inconsolata);
+::-webkit-scrollbar {
+  width: 12px;
+  background-color: #c8c8c8; }
+
+::-webkit-scrollbar-track {
+  background-color: #d2d2d2; }
+
+::-webkit-scrollbar-thumb {
+  background-color: #646464; }
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: #2194CE;
+  cursor: pointer; }
+
 .CodeMirror {
-  border: 1px solid #eee;
+  border: none;
   height: auto !important;
   font-family: "Inconsolata", monospace !important; }
+
+.standard {
+  font-family: "Inconsolata", monospace !important;
+  font-size: 16px;
+  color: #2194CE !important; }
+
+.exampleText {
+  font-family: "Inconsolata", monospace !important;
+  font-size: 24px;
+  padding-left: 36px;
+  color: #2194CE !important; }
 
 body {
   margin: 0;
@@ -41,7 +66,7 @@ a:hover {
   line-height: 45px; }
   .linkList .link {
     padding-left: 20px;
-    font-family: "Inconsolata", monospace !important;
+    font-family: "Inconsolata", monospace;
     font-size: 18px;
     line-height: 24px;
     display: block; }

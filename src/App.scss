@@ -7,12 +7,46 @@ $open_sans: 'Open Sans', sans-serif;
 $space_mono: 'Space Mono', monospace;
 $raleway: 'Raleway', sans-serif;
 $droid_serif: 'Droid Serif', serif;
-$inconsolata: 'Inconsolata', monospace !important;
+$inconsolata: 'Inconsolata', monospace;
+
+
+::-webkit-scrollbar {
+    width: 12px;
+    background-color: rgb(200, 200, 200);
+}
+
+::-webkit-scrollbar-track {
+    background-color: rgb(210, 210, 210);
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: rgb(100, 100, 100);
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background-color: #2194CE;
+    cursor:pointer;
+}
+
 
 .CodeMirror {
-  border: 1px solid #eee;
+  border: none;
   height: auto !important;
-  font-family:$inconsolata;
+  font-family:$inconsolata !important;
+
+}
+
+.standard{
+  font-family:$inconsolata !important;
+  font-size:16px;
+  color: #2194CE !important;
+}
+
+.exampleText{
+  font-family:$inconsolata !important;
+  font-size:24px;
+  padding-left:36px;
+  color: #2194CE !important;
 }
 
 body {

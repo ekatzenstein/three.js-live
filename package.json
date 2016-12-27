@@ -8,10 +8,8 @@
   },
   "dependencies": {
     "axios": "^0.15.3",
-    "bootstrap": "^3.3.7",
     "d3": "^4.4.0",
     "material-ui": "^0.16.5",
-    "morgan": "^1.7.0",
     "path": "^0.12.7",
     "react": "^15.4.1",
     "react-codemirror": "^0.3.0",
