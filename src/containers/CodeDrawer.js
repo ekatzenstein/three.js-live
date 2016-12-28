@@ -41,10 +41,9 @@ export default class CodeDrawer extends React.Component {
           animate={this.props.animate}
           top={this.props.top}
           transparency={this.props.transparency}
-          pathnam={this.props.pathname}
+          pathname={this.props.pathname}
           value={this.props.value}
           updateCode={this.props.updateCode}
-          interact={this.props.interact}
         />
         <CodeBlockToolbar
           delay={delay}

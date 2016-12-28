@@ -39,7 +39,6 @@ export default class CodeBlock extends React.Component {
           value={props.value}
           onChange={props.updateCode}
           options={options}
-          interact={props.interact}
         />
         </div>
       </Drawer>

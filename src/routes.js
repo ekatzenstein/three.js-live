@@ -1,16 +1,14 @@
 import React from 'react';
 import {Router, Route, IndexRedirect} from 'react-router';
 
-import App from './containers/App';
+import AppOG from './containers/AppOG';
 
 const Routes = (props) => (
     <Router {...props}>
-
-        <Route path="/" component={App}>
+        <Route path="/" component={AppOG}>
             <IndexRedirect to="/home"/>
         </Route>
-        <Route path="/:id" component={App}/>
-
+        <Route path="/:id" component={AppOG}/>
     </Router>
 );
 
