@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import { browserHistory } from 'react-router';
+import { hashHistory } from 'react-router';
 
 import { Provider } from 'react-redux';
 import { createStore } from 'redux';
@@ -13,7 +13,7 @@ let store = createStore(rootReducer)
 
 ReactDOM.render(
   <Provider store={store}>
-    <Routes history={browserHistory} />
+    <Routes history={hashHistory} />
   </Provider>,
   document.getElementById('root')
 );

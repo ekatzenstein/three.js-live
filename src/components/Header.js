@@ -9,7 +9,7 @@ const Header = (props) => (
         showMenuIconButton={false}
         title={<HeaderTitle/>}
         titleStyle={{color: 'black'}}
-        zDepth={3}
+        zDepth={1}
         style={{backgroundColor: 'white', minHeight: `${props.height}px`, zIndex:6}}
         iconElementRight={
             <HeaderTools

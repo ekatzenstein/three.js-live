@@ -29,5 +29,5 @@
     "eject": "react-scripts eject",
     "deploy": "npm run build&&gh-pages -d build"
   },
-  "homepage": "https://ekatzenstein.github.io/my-app"
+  "homepage": "https://ekatzenstein.github.io/three.js-live"
 }
