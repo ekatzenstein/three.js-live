@@ -4,6 +4,7 @@
   "private": true,
   "devDependencies": {
     "create-react-app-sass": "^1.1.0",
+    "gh-pages": "^0.12.0",
     "react-scripts": "0.8.4"
   },
   "dependencies": {
@@ -25,6 +26,8 @@
     "start": "react-scripts-with-sass start",
     "build": "react-scripts-with-sass build",
     "test": "react-scripts test --env=jsdom",
-    "eject": "react-scripts eject"
-  }
+    "eject": "react-scripts eject",
+    "deploy": "npm run build&&gh-pages -d build"
+  },
+  "homepage": "https://ekatzenstein.github.io/my-app"
 }
