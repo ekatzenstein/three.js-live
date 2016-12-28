@@ -1,42 +1,4 @@
-<!doctype html>
-<html lang="en">
-
-<head>
-    <meta charset="utf-8">
-    <title>Home Page</title>
-    <style>
-        @import url(https://fonts.googleapis.com/css?family=Raleway|Inconsolata);
-        h1,
-        h2 {
-            font-family: 'Raleway', sans-serif;
-            font-weight: 100;
-            padding-left: 30px;
-        }
-
-        p {
-            font-family: 'Inconsolata', monospace;
-            font-weight: 100;
-            padding-left: 30px;
-        }
-
-        a {
-            font-family: 'Inconsolata', monospace;
-            color: #2194CE;
-            text-decoration: none;
-        }
-
-        a:hover {
-            text-decoration: underline;
-        }
-
-        ul {
-            list-style-position: inside;
-        }
-    </style>
-</head>
-
-<body style='padding-top:2px; padding-right:20%;'>
-    <h1><a href="https://threejs.org/" target="_blank" style='font-family:"Raleway", sans-serif;'>three.js</a> / live</h1>
+   <h1><a href="https://threejs.org/" target="_blank" style='font-family:"Raleway", sans-serif;'>three.js</a> / live</h1>
     <br/>
     <h2>Getting Started</h2>
     <p>Activate the "Code" button in the header to view the html file and edit. Select example files from the sidebar to get started with interactive demos.</p>
@@ -66,7 +28,3 @@
             target="_blank">Mode Lab</a>. Much of the work extends to variety of designers of varying techinical abilities, so live user-interaction is a major focus of our user design and development. But alas, since we're a product design-focused consulting studio, non-disclosure
         agreements are part of the nature of the beast. I'm aiming to share more work, more readily, and more accessibly in order to stay in touch with the design and programming community. This first build-out is a loose template for future work releases.
     </p>
-    <br/>
-</body>
-
-</html>
