@@ -18,22 +18,6 @@ const style = (props) => (
 )
 export default class ExampleDrawer extends React.Component {
 
-  constructor(props) {
-    super(props);
-    this.state = {open: true};
-    this._handleToggle = this._handleToggle.bind(this);
-  }
-
-  _handleToggle = (open) => {
-    this.setState({open})
-  };
-
-  componentWillReceiveProps(nextProps){
-    if(this.state.open!==nextProps.sidebar){
-      this._handleToggle(nextProps.sidebar)
-    }
-  }
-
   render() {
     const left = window.innerWidth*this.props.left;
     const sbW = Math.max(left,200);
@@ -46,7 +30,7 @@ export default class ExampleDrawer extends React.Component {
           className='sidebar'
           width={maxW}
           openSecondary={false}
-          open={this.state.open}
+          open={this.props.open}
           overlayStyle={{fontSize:'20px'}}
           containerStyle={styles.drawerContainerStyle}
           zDepth={0}

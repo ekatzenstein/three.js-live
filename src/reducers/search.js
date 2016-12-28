@@ -1,4 +1,4 @@
-import {SEARCH} from '../actions';
+import {SEARCH} from '../constants';
 
 const initialState = {
     searchQuery:'',

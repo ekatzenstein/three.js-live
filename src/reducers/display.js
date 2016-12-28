@@ -2,7 +2,7 @@ import {
     CODE_TOGGLE,
     SIDEBAR_TOGGLE,
     DISABLE_ANIMATE
-} from '../actions';
+} from '../constants';
 
 const left_width=.25
 
@@ -16,9 +16,7 @@ const initialState = {
 export default function(state = initialState, action) {
     switch (action.type) {
         case SIDEBAR_TOGGLE:
-            const left = state.sb
-                ? 0
-                : left_width;
+            const left = state.sb ? 0 : left_width;
             return {...state,
                 sb: !state.sb,
                 animateCode:true,

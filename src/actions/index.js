@@ -25,7 +25,6 @@ export function disableAnimate() {
   }
 }
 export function disableIframeUpdate() {
-  console.log('alksndf')
   return {
     type: DISABLE_IFRAME_UPDATE
   }

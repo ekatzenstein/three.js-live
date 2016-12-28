@@ -32,7 +32,7 @@ export default class CodeBlock extends React.Component {
         }}
       >
         <div style={{opacity:props.transparency, paddingTop:`30px`, paddingRight:'120px',backgroundColor:'rgb(255,255,255)'}}>
-        <div className='exampleText'>{props.pathname}</div>
+        <div className='exampleText'>{props.pathname === '/' ? '/home' : props.pathname}</div>
         <br/>
         <Codemirror
           ref="editor"
