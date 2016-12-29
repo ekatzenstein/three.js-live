@@ -1,8 +1,8 @@
    <h1><a href="http://threejs.live/" target="_blank" style='font-family:"Raleway", sans-serif;'>three.js / live</a></h1>
     <h2>Getting Started</h2>
     <p>Activate the "Code" button in the header to view the html file and edit. Select example files from the sidebar to get started with interactive demos.</p>
-       <br/>
-   <img src="demo.gif" alt="threejs.live demo" width="100%">
+       <br/>  
+   <a href="https://vimeo.com/197337522" target="_blank"><img src="demo.jpg" width="100%"/></a>
     <br/>
     <h2>About</h2>
     <p>
