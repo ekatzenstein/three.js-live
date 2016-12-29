@@ -1,4 +1,4 @@
-   <h1><a href="https://threejs.org/" target="_blank" style='font-family:"Raleway", sans-serif;'>three.js</a> / live</h1>
+   <h1><a href="https://threejs.live/" target="_blank" style='font-family:"Raleway", sans-serif;'>three.js / live</a></h1>
     <br/>
     <h2>Getting Started</h2>
     <p>Activate the "Code" button in the header to view the html file and edit. Select example files from the sidebar to get started with interactive demos.</p>
