@@ -1,6 +1,6 @@
 import {
     LOAD_EXAMPLES
-} from '../constants';
+} from '../actions';
 
 
 const initialState = {

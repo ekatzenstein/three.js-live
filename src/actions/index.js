@@ -6,12 +6,25 @@ export const SEARCH = 'SEARCH';
 export const DISABLE_ANIMATE = 'DISABLE_ANIMATE';
 export const DISABLE_IFRAME_UPDATE = 'DISABLE_IFRAME_UPDATE';
 export const ENABLE_IFRAME_UPDATE = 'ENABLE_IFRAME_UPDATE';
+export const PAUSE_IFRAME_UPDATE = 'PAUSE_IFRAME_UPDATE';
 export const LOAD_EXAMPLES = 'LOAD_EXAMPLES';
+export const IFRAME_RESET = 'IFRAME_RESET';
+export const IFRAME_DESTROY = 'IFRAME_DESTROY';
 
 
 export function sbToggle() {
   return {
     type: SIDEBAR_TOGGLE
+  }
+}
+export function iFrameReset() {
+  return {
+    type: IFRAME_RESET
+  }
+}
+export function iFrameDestroy() {
+  return {
+    type: IFRAME_DESTROY
   }
 }
 export function cbToggle() {
@@ -24,14 +37,21 @@ export function disableAnimate() {
     type: DISABLE_ANIMATE
   }
 }
-export function disableIframeUpdate() {
+export function disableIframeUpdate(data) {
   return {
-    type: DISABLE_IFRAME_UPDATE
+    type: DISABLE_IFRAME_UPDATE,
+    data
   }
 }
-export function enableIframeUpdate() {
+export function enableIframeUpdate(data) {
   return {
-    type: ENABLE_IFRAME_UPDATE
+    type: ENABLE_IFRAME_UPDATE,
+    data
+  }
+}
+export function pauseIframeUpdate() {
+  return {
+    type: PAUSE_IFRAME_UPDATE
   }
 }
 

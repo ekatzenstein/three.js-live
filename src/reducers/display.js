@@ -2,7 +2,7 @@ import {
     CODE_TOGGLE,
     SIDEBAR_TOGGLE,
     DISABLE_ANIMATE
-} from '../constants';
+} from '../actions';
 
 const left_width=.25
 

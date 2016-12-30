@@ -13,6 +13,7 @@ import '../App.css';
 import ExampleDrawer from './ExampleDrawer';
 import CodeDrawer from './CodeDrawer';
 import Header from '../components/Header';
+import IFrame from '../components/IFrame';
 
 //material-ui requirements
 import getMuiTheme from 'material-ui/styles/getMuiTheme';
@@ -22,7 +23,7 @@ injectTapEventPlugin();
 
 //constants
 const headerHeight = 80;
-const top = headerHeight / window.innerHeight
+const top = headerHeight / window.innerHeight;
 
 class App extends Component {
     constructor() {
@@ -41,13 +42,23 @@ class App extends Component {
     }
 
     componentDidUpdate() {
-        if (this.props.updateScene) {
+        if (this.props.reloadFrame) {
+            if(this.props.iFrameRender){
+                this.props.actions.iFrameDestroy();
+            }
+            else if(!document.getElementById('preview')){
+                this.props.actions.iFrameReset();
+                this.props.actions.disableIframeUpdate();
+            }
+        }
+        else if (this.props.updateScene){
             this._updateCanvas();
-            this.props.actions.disableIframeUpdate();
+            this.props.actions.pauseIframeUpdate();
         }
     }
 
     componentDidMount() {
+
         const _this = this;
         window.addEventListener('resize', () => {
             _this.props.actions.disableAnimate();
@@ -93,31 +104,28 @@ class App extends Component {
         url_path = url_path === 'three.js/examples//.html' ? 'home.html' : url_path;
         const _this = this;
         axios.get(url_path).then(function(response) {
-            const newcode = response.data.replace('<head>', `<head><base href="./three.js/examples/" target="_blank">`);
+            let newcode = response.data.replace('<head>', `<head><base href="./three.js/examples/" target="_blank">`);
             _this.props.actions.updateCode(newcode,_this.props.location.pathname)
-            _this._updateCanvas();
         }).catch(function(error) {
             console.log(error);
         });
     }
+    _cleanup(){
+        this.props.actions.iFrameDestroy();
 
+        // console.log(document.getElementById('preview').children, document.getElementById('preview'))
+
+    }
 
     render(props) {
         return (
             <div className="App">
-                <div style={{
+                <div id='iContainer' style={{
                     zIndex: 2
                 }}>
-                    <iframe id="preview" height={`${100-100*(headerHeight)/window.innerHeight}%`} style={{
-                        transitionTimingFunction: 'cubic-bezier(0.23, 1, 0.32, 1)',
-                        transition: this.props.animateCode ? 'all 450ms' : 'all 0ms',
-                        width: `${ 100 *(1 - this.props.left)}%`,
-                        position: 'absolute',
-                        left: `${ 100 *this.props.left}%`,
-                        zIndex: 0,
-                        paddingTop: `${headerHeight+8}px`
-                    }}></iframe>
-                </div>
+                    {this.props.iFrameRender? <IFrame id='comp' animateCode={this.props.animateCode} left={this.props.left} headerHeight={headerHeight}/>
+                :null}
+            </div>
                 <Header
                     transparency={this.props.codeBlockTransparency}
                     cbToggle={this.props.actions.cbToggle}
@@ -169,8 +177,10 @@ function mapStateToProps(state){
     search:state.search.searchQuery,
     code:state.code.code,
     updateScene:state.code.updateScene,
+    reloadFrame:state.code.reloadFrame,
     example:state.code.example,
-    exampleFiles:state.load.exampleFiles
+    exampleFiles:state.load.exampleFiles,
+    iFrameRender:state.iframe.render
   }
 }
 
