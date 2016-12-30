@@ -453,11 +453,11 @@ Vector2.prototype = {
 
 	},
 
-	fromBufferAttribute: function ( attribute, index, offset ) {
+	fromAttribute: function ( attribute, index, offset ) {
 
 		if ( offset !== undefined ) {
 
-			console.warn( 'THREE.Vector2: offset has been removed from .fromBufferAttribute().' );
+			console.warn( 'THREE.Vector2: offset has been removed from .fromAttribute().' );
 
 		}
 

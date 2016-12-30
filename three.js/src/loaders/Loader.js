@@ -1,20 +1,4 @@
-import {
-	NoBlending,
-	NormalBlending,
-	AdditiveBlending,
-	SubtractiveBlending,
-	MultiplyBlending,
-	CustomBlending,
-
-	FaceColors,
-	VertexColors,
-
-	DoubleSide,
-	BackSide,
-
-	MirroredRepeatWrapping,
-	RepeatWrapping
-} from '../constants';
+import { FaceColors, VertexColors, DoubleSide, BackSide, MirroredRepeatWrapping, RepeatWrapping, BlendingMode } from '../constants';
 import { _Math } from '../math/Math';
 import { MaterialLoader } from './MaterialLoader';
 import { TextureLoader } from './TextureLoader';
@@ -65,15 +49,6 @@ Loader.prototype = {
 	},
 
 	createMaterial: ( function () {
-
-		var BlendingMode = {
-			NoBlending: NoBlending,
-			NormalBlending: NormalBlending,
-			AdditiveBlending: AdditiveBlending,
-			SubtractiveBlending: SubtractiveBlending,
-			MultiplyBlending: MultiplyBlending,
-			CustomBlending: CustomBlending
-		};
 
 		var color, textureLoader, materialLoader;
 
@@ -156,7 +131,6 @@ Loader.prototype = {
 				var value = m[ name ];
 
 				switch ( name ) {
-
 					case 'DbgColor':
 					case 'DbgIndex':
 					case 'opticalDensity':
@@ -302,7 +276,6 @@ Loader.prototype = {
 					default:
 						console.error( 'THREE.Loader.createMaterial: Unsupported', name, value );
 						break;
-
 				}
 
 			}
@@ -339,7 +312,7 @@ Loader.Handlers = {
 		for ( var i = 0, l = handlers.length; i < l; i += 2 ) {
 
 			var regex = handlers[ i ];
-			var loader = handlers[ i + 1 ];
+			var loader  = handlers[ i + 1 ];
 
 			if ( regex.test( file ) ) {
 

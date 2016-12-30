@@ -38,9 +38,7 @@ function BufferGeometry() {
 
 }
 
-BufferGeometry.prototype = {
-
-	constructor: BufferGeometry,
+Object.assign( BufferGeometry.prototype, EventDispatcher.prototype, {
 
 	isBufferGeometry: true,
 
@@ -128,7 +126,7 @@ BufferGeometry.prototype = {
 
 		if ( position !== undefined ) {
 
-			matrix.applyToBufferAttribute( position );
+			matrix.applyToVector3Array( position.array );
 			position.needsUpdate = true;
 
 		}
@@ -139,7 +137,7 @@ BufferGeometry.prototype = {
 
 			var normalMatrix = new Matrix3().getNormalMatrix( matrix );
 
-			normalMatrix.applyToBufferAttribute( normal );
+			normalMatrix.applyToVector3Array( normal.array );
 			normal.needsUpdate = true;
 
 		}
@@ -999,23 +997,6 @@ BufferGeometry.prototype = {
 
 	copy: function ( source ) {
 
-		var name, i, l;
-
-		// reset
-
-		this.index = null;
-		this.attributes = {};
-		this.morphAttributes = {};
-		this.groups = [];
-		this.boundingBox = null;
-		this.boundingSphere = null;
-
-		// name
-
-		this.name = source.name;
-
-		// index
-
 		var index = source.index;
 
 		if ( index !== null ) {
@@ -1024,71 +1005,23 @@ BufferGeometry.prototype = {
 
 		}
 
-		// attributes
-
 		var attributes = source.attributes;
 
-		for ( name in attributes ) {
+		for ( var name in attributes ) {
 
 			var attribute = attributes[ name ];
 			this.addAttribute( name, attribute.clone() );
 
 		}
 
-		// morph attributes
-
-		var morphAttributes = source.morphAttributes;
-
-		for ( name in morphAttributes ) {
-
-			var array = [];
-			var morphAttribute = morphAttributes[ name ]; // morphAttribute: array of Float32BufferAttributes
-
-			for ( i = 0, l = morphAttribute.length; i < l; i ++ ) {
-
-				array.push( morphAttribute[ i ].clone() );
-
-			}
-
-			this.morphAttributes[ name ] = array;
-
-		}
-
-		// groups
-
 		var groups = source.groups;
 
-		for ( i = 0, l = groups.length; i < l; i ++ ) {
+		for ( var i = 0, l = groups.length; i < l; i ++ ) {
 
 			var group = groups[ i ];
 			this.addGroup( group.start, group.count, group.materialIndex );
 
 		}
-
-		// bounding box
-
-		var boundingBox = source.boundingBox;
-
-		if ( boundingBox !== null ) {
-
-			this.boundingBox = boundingBox.clone();
-
-		}
-
-		// bounding sphere
-
-		var boundingSphere = source.boundingSphere;
-
-		if ( boundingSphere !== null ) {
-
-			this.boundingSphere = boundingSphere.clone();
-
-		}
-
-		// draw range
-
-		this.drawRange.start = source.drawRange.start;
-		this.drawRange.count = source.drawRange.count;
 
 		return this;
 
@@ -1100,10 +1033,9 @@ BufferGeometry.prototype = {
 
 	}
 
-};
+} );
 
 BufferGeometry.MaxIndex = 65535;
 
-Object.assign( BufferGeometry.prototype, EventDispatcher.prototype );
 
 export { BufferGeometry };

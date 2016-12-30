@@ -96,7 +96,7 @@
 
 	function EventDispatcher() {}
 
-	EventDispatcher.prototype = {
+	Object.assign( EventDispatcher.prototype, {
 
 		addEventListener: function ( type, listener ) {
 
@@ -179,9 +179,9 @@
 
 		}
 
-	};
+	} );
 
-	var REVISION = '84dev';
+	var REVISION = '83';
 	var MOUSE = { LEFT: 0, MIDDLE: 1, RIGHT: 2 };
 	var CullFaceNone = 0;
 	var CullFaceBack = 1;
@@ -206,6 +206,14 @@
 	var SubtractiveBlending = 3;
 	var MultiplyBlending = 4;
 	var CustomBlending = 5;
+	var BlendingMode = {
+		NoBlending: NoBlending,
+		NormalBlending: NormalBlending,
+		AdditiveBlending: AdditiveBlending,
+		SubtractiveBlending: SubtractiveBlending,
+		MultiplyBlending: MultiplyBlending,
+		CustomBlending: CustomBlending
+	};
 	var AddEquation = 100;
 	var SubtractEquation = 101;
 	var ReverseSubtractEquation = 102;
@@ -246,15 +254,38 @@
 	var SphericalReflectionMapping = 305;
 	var CubeUVReflectionMapping = 306;
 	var CubeUVRefractionMapping = 307;
+	var TextureMapping = {
+		UVMapping: UVMapping,
+		CubeReflectionMapping: CubeReflectionMapping,
+		CubeRefractionMapping: CubeRefractionMapping,
+		EquirectangularReflectionMapping: EquirectangularReflectionMapping,
+		EquirectangularRefractionMapping: EquirectangularRefractionMapping,
+		SphericalReflectionMapping: SphericalReflectionMapping,
+		CubeUVReflectionMapping: CubeUVReflectionMapping,
+		CubeUVRefractionMapping: CubeUVRefractionMapping
+	};
 	var RepeatWrapping = 1000;
 	var ClampToEdgeWrapping = 1001;
 	var MirroredRepeatWrapping = 1002;
+	var TextureWrapping = {
+		RepeatWrapping: RepeatWrapping,
+		ClampToEdgeWrapping: ClampToEdgeWrapping,
+		MirroredRepeatWrapping: MirroredRepeatWrapping
+	};
 	var NearestFilter = 1003;
 	var NearestMipMapNearestFilter = 1004;
 	var NearestMipMapLinearFilter = 1005;
 	var LinearFilter = 1006;
 	var LinearMipMapNearestFilter = 1007;
 	var LinearMipMapLinearFilter = 1008;
+	var TextureFilter = {
+		NearestFilter: NearestFilter,
+		NearestMipMapNearestFilter: NearestMipMapNearestFilter,
+		NearestMipMapLinearFilter: NearestMipMapLinearFilter,
+		LinearFilter: LinearFilter,
+		LinearMipMapNearestFilter: LinearMipMapNearestFilter,
+		LinearMipMapLinearFilter: LinearMipMapLinearFilter
+	};
 	var UnsignedByteType = 1009;
 	var ByteType = 1010;
 	var ShortType = 1011;
@@ -928,11 +959,11 @@
 
 		},
 
-		fromBufferAttribute: function ( attribute, index, offset ) {
+		fromAttribute: function ( attribute, index, offset ) {
 
 			if ( offset !== undefined ) {
 
-				console.warn( 'THREE.Vector2: offset has been removed from .fromBufferAttribute().' );
+				console.warn( 'THREE.Vector2: offset has been removed from .fromAttribute().' );
 
 			}
 
@@ -1855,11 +1886,11 @@
 
 		},
 
-		fromBufferAttribute: function ( attribute, index, offset ) {
+		fromAttribute: function ( attribute, index, offset ) {
 
 			if ( offset !== undefined ) {
 
-				console.warn( 'THREE.Vector4: offset has been removed from .fromBufferAttribute().' );
+				console.warn( 'THREE.Vector4: offset has been removed from .fromAttribute().' );
 
 			}
 
@@ -1909,9 +1940,7 @@
 
 	}
 
-	WebGLRenderTarget.prototype = {
-
-		constructor: WebGLRenderTarget,
+	Object.assign( WebGLRenderTarget.prototype, EventDispatcher.prototype, {
 
 		isWebGLRenderTarget: true,
 
@@ -1960,9 +1989,7 @@
 
 		}
 
-	};
-
-	Object.assign( WebGLRenderTarget.prototype, EventDispatcher.prototype );
+	} );
 
 	/**
 	 * @author alteredq / http://alteredqualia.com
@@ -2859,15 +2886,32 @@
 
 		applyMatrix4: function ( m ) {
 
+			// input: THREE.Matrix4 affine matrix
+
 			var x = this.x, y = this.y, z = this.z;
 			var e = m.elements;
 
 			this.x = e[ 0 ] * x + e[ 4 ] * y + e[ 8 ]  * z + e[ 12 ];
 			this.y = e[ 1 ] * x + e[ 5 ] * y + e[ 9 ]  * z + e[ 13 ];
 			this.z = e[ 2 ] * x + e[ 6 ] * y + e[ 10 ] * z + e[ 14 ];
-			var w =  e[ 3 ] * x + e[ 7 ] * y + e[ 11 ] * z + e[ 15 ];
 
-			return this.divideScalar( w );
+			return this;
+
+		},
+
+		applyProjection: function ( m ) {
+
+			// input: THREE.Matrix4 projection matrix
+
+			var x = this.x, y = this.y, z = this.z;
+			var e = m.elements;
+			var d = 1 / ( e[ 3 ] * x + e[ 7 ] * y + e[ 11 ] * z + e[ 15 ] ); // perspective divide
+
+			this.x = ( e[ 0 ] * x + e[ 4 ] * y + e[ 8 ]  * z + e[ 12 ] ) * d;
+			this.y = ( e[ 1 ] * x + e[ 5 ] * y + e[ 9 ]  * z + e[ 13 ] ) * d;
+			this.z = ( e[ 2 ] * x + e[ 6 ] * y + e[ 10 ] * z + e[ 14 ] ) * d;
+
+			return this;
 
 		},
 
@@ -2902,7 +2946,7 @@
 				if ( matrix === undefined ) matrix = new Matrix4();
 
 				matrix.multiplyMatrices( camera.projectionMatrix, matrix.getInverse( camera.matrixWorld ) );
-				return this.applyMatrix4( matrix );
+				return this.applyProjection( matrix );
 
 			};
 
@@ -2917,7 +2961,7 @@
 				if ( matrix === undefined ) matrix = new Matrix4();
 
 				matrix.multiplyMatrices( camera.matrixWorld, matrix.getInverse( camera.projectionMatrix ) );
-				return this.applyMatrix4( matrix );
+				return this.applyProjection( matrix );
 
 			};
 
@@ -3310,11 +3354,11 @@
 
 		},
 
-		fromBufferAttribute: function ( attribute, index, offset ) {
+		fromAttribute: function ( attribute, index, offset ) {
 
 			if ( offset !== undefined ) {
 
-				console.warn( 'THREE.Vector3: offset has been removed from .fromBufferAttribute().' );
+				console.warn( 'THREE.Vector3: offset has been removed from .fromAttribute().' );
 
 			}
 
@@ -3775,6 +3819,30 @@
 
 		},
 
+		applyToVector3Array: function () {
+
+			var v1;
+
+			return function applyToVector3Array( array, offset, length ) {
+
+				if ( v1 === undefined ) v1 = new Vector3();
+				if ( offset === undefined ) offset = 0;
+				if ( length === undefined ) length = array.length;
+
+				for ( var i = 0, j = offset; i < length; i += 3, j += 3 ) {
+
+					v1.fromArray( array, j );
+					v1.applyMatrix4( this );
+					v1.toArray( array, j );
+
+				}
+
+				return array;
+
+			};
+
+		}(),
+
 		applyToBufferAttribute: function () {
 
 			var v1;
@@ -4160,13 +4228,7 @@
 
 		}(),
 
-		makePerspective: function ( left, right, top, bottom, near, far ) {
-
-			if ( far === undefined ) {
-
-				console.warn( 'THREE.Matrix4: .makePerspective() has been redefined and has a new signature. Please check the docs.' );
-
-			}
+		makeFrustum: function ( left, right, bottom, top, near, far ) {
 
 			var te = this.elements;
 			var x = 2 * near / ( right - left );
@@ -4183,6 +4245,17 @@
 			te[ 3 ] = 0;	te[ 7 ] = 0;	te[ 11 ] = - 1;	te[ 15 ] = 0;
 
 			return this;
+
+		},
+
+		makePerspective: function ( fov, aspect, near, far ) {
+
+			var ymax = near * Math.tan( _Math.DEG2RAD * fov * 0.5 );
+			var ymin = - ymax;
+			var xmin = ymin * aspect;
+			var xmax = ymax * aspect;
+
+			return this.makeFrustum( xmin, xmax, ymin, ymax, near, far );
 
 		},
 
@@ -4943,7 +5016,7 @@
 
 	var common = "#define PI 3.14159265359\n#define PI2 6.28318530718\n#define PI_HALF 1.5707963267949\n#define RECIPROCAL_PI 0.31830988618\n#define RECIPROCAL_PI2 0.15915494\n#define LOG2 1.442695\n#define EPSILON 1e-6\n#define saturate(a) clamp( a, 0.0, 1.0 )\n#define whiteCompliment(a) ( 1.0 - saturate( a ) )\nfloat pow2( const in float x ) { return x*x; }\nfloat pow3( const in float x ) { return x*x*x; }\nfloat pow4( const in float x ) { float x2 = x*x; return x2*x2; }\nfloat average( const in vec3 color ) { return dot( color, vec3( 0.3333 ) ); }\nhighp float rand( const in vec2 uv ) {\n\tconst highp float a = 12.9898, b = 78.233, c = 43758.5453;\n\thighp float dt = dot( uv.xy, vec2( a,b ) ), sn = mod( dt, PI );\n\treturn fract(sin(sn) * c);\n}\nstruct IncidentLight {\n\tvec3 color;\n\tvec3 direction;\n\tbool visible;\n};\nstruct ReflectedLight {\n\tvec3 directDiffuse;\n\tvec3 directSpecular;\n\tvec3 indirectDiffuse;\n\tvec3 indirectSpecular;\n};\nstruct GeometricContext {\n\tvec3 position;\n\tvec3 normal;\n\tvec3 viewDir;\n};\nvec3 transformDirection( in vec3 dir, in mat4 matrix ) {\n\treturn normalize( ( matrix * vec4( dir, 0.0 ) ).xyz );\n}\nvec3 inverseTransformDirection( in vec3 dir, in mat4 matrix ) {\n\treturn normalize( ( vec4( dir, 0.0 ) * matrix ).xyz );\n}\nvec3 projectOnPlane(in vec3 point, in vec3 pointOnPlane, in vec3 planeNormal ) {\n\tfloat distance = dot( planeNormal, point - pointOnPlane );\n\treturn - distance * planeNormal + point;\n}\nfloat sideOfPlane( in vec3 point, in vec3 pointOnPlane, in vec3 planeNormal ) {\n\treturn sign( dot( point - pointOnPlane, planeNormal ) );\n}\nvec3 linePlaneIntersect( in vec3 pointOnLine, in vec3 lineDirection, in vec3 pointOnPlane, in vec3 planeNormal ) {\n\treturn lineDirection * ( dot( planeNormal, pointOnPlane - pointOnLine ) / dot( planeNormal, lineDirection ) ) + pointOnLine;\n}\nmat3 transpose( const in mat3 v ) {\n\tmat3 tmp;\n\ttmp[0] = vec3(v[0].x, v[1].x, v[2].x);\n\ttmp[1] = vec3(v[0].y, v[1].y, v[2].y);\n\ttmp[2] = vec3(v[0].z, v[1].z, v[2].z);\n\treturn tmp;\n}\n";
 
-	var cube_uv_reflection_fragment = "#ifdef ENVMAP_TYPE_CUBE_UV\n#define cubeUV_textureSize (1024.0)\nint getFaceFromDirection(vec3 direction) {\n\tvec3 absDirection = abs(direction);\n\tint face = -1;\n\tif( absDirection.x > absDirection.z ) {\n\t\tif(absDirection.x > absDirection.y )\n\t\t\tface = direction.x > 0.0 ? 0 : 3;\n\t\telse\n\t\t\tface = direction.y > 0.0 ? 1 : 4;\n\t}\n\telse {\n\t\tif(absDirection.z > absDirection.y )\n\t\t\tface = direction.z > 0.0 ? 2 : 5;\n\t\telse\n\t\t\tface = direction.y > 0.0 ? 1 : 4;\n\t}\n\treturn face;\n}\n#define cubeUV_maxLods1  (log2(cubeUV_textureSize*0.25) - 1.0)\n#define cubeUV_rangeClamp (exp2((6.0 - 1.0) * 2.0))\nvec2 MipLevelInfo( vec3 vec, float roughnessLevel, float roughness ) {\n\tfloat scale = exp2(cubeUV_maxLods1 - roughnessLevel);\n\tfloat dxRoughness = dFdx(roughness);\n\tfloat dyRoughness = dFdy(roughness);\n\tvec3 dx = dFdx( vec * scale * dxRoughness );\n\tvec3 dy = dFdy( vec * scale * dyRoughness );\n\tfloat d = max( dot( dx, dx ), dot( dy, dy ) );\n\td = clamp(d, 1.0, cubeUV_rangeClamp);\n\tfloat mipLevel = 0.5 * log2(d);\n\treturn vec2(floor(mipLevel), fract(mipLevel));\n}\n#define cubeUV_maxLods2 (log2(cubeUV_textureSize*0.25) - 2.0)\n#define cubeUV_rcpTextureSize (1.0 / cubeUV_textureSize)\nvec2 getCubeUV(vec3 direction, float roughnessLevel, float mipLevel) {\n\tmipLevel = roughnessLevel > cubeUV_maxLods2 - 3.0 ? 0.0 : mipLevel;\n\tfloat a = 16.0 * cubeUV_rcpTextureSize;\n\tvec2 exp2_packed = exp2( vec2( roughnessLevel, mipLevel ) );\n\tvec2 rcp_exp2_packed = vec2( 1.0 ) / exp2_packed;\n\tfloat powScale = exp2_packed.x * exp2_packed.y;\n\tfloat scale = rcp_exp2_packed.x * rcp_exp2_packed.y * 0.25;\n\tfloat mipOffset = 0.75*(1.0 - rcp_exp2_packed.y) * rcp_exp2_packed.x;\n\tbool bRes = mipLevel == 0.0;\n\tscale =  bRes && (scale < a) ? a : scale;\n\tvec3 r;\n\tvec2 offset;\n\tint face = getFaceFromDirection(direction);\n\tfloat rcpPowScale = 1.0 / powScale;\n\tif( face == 0) {\n\t\tr = vec3(direction.x, -direction.z, direction.y);\n\t\toffset = vec2(0.0+mipOffset,0.75 * rcpPowScale);\n\t\toffset.y = bRes && (offset.y < 2.0*a) ? a : offset.y;\n\t}\n\telse if( face == 1) {\n\t\tr = vec3(direction.y, direction.x, direction.z);\n\t\toffset = vec2(scale+mipOffset, 0.75 * rcpPowScale);\n\t\toffset.y = bRes && (offset.y < 2.0*a) ? a : offset.y;\n\t}\n\telse if( face == 2) {\n\t\tr = vec3(direction.z, direction.x, direction.y);\n\t\toffset = vec2(2.0*scale+mipOffset, 0.75 * rcpPowScale);\n\t\toffset.y = bRes && (offset.y < 2.0*a) ? a : offset.y;\n\t}\n\telse if( face == 3) {\n\t\tr = vec3(direction.x, direction.z, direction.y);\n\t\toffset = vec2(0.0+mipOffset,0.5 * rcpPowScale);\n\t\toffset.y = bRes && (offset.y < 2.0*a) ? 0.0 : offset.y;\n\t}\n\telse if( face == 4) {\n\t\tr = vec3(direction.y, direction.x, -direction.z);\n\t\toffset = vec2(scale+mipOffset, 0.5 * rcpPowScale);\n\t\toffset.y = bRes && (offset.y < 2.0*a) ? 0.0 : offset.y;\n\t}\n\telse {\n\t\tr = vec3(direction.z, -direction.x, direction.y);\n\t\toffset = vec2(2.0*scale+mipOffset, 0.5 * rcpPowScale);\n\t\toffset.y = bRes && (offset.y < 2.0*a) ? 0.0 : offset.y;\n\t}\n\tr = normalize(r);\n\tfloat texelOffset = 0.5 * cubeUV_rcpTextureSize;\n\tvec2 s = ( r.yz / abs( r.x ) + vec2( 1.0 ) ) * 0.5;\n\tvec2 base = offset + vec2( texelOffset );\n\treturn base + s * ( scale - 2.0 * texelOffset );\n}\n#define cubeUV_maxLods3 (log2(cubeUV_textureSize*0.25) - 3.0)\nvec4 textureCubeUV(vec3 reflectedDirection, float roughness ) {\n\tfloat roughnessVal = roughness* cubeUV_maxLods3;\n\tfloat r1 = floor(roughnessVal);\n\tfloat r2 = r1 + 1.0;\n\tfloat t = fract(roughnessVal);\n\tvec2 mipInfo = MipLevelInfo(reflectedDirection, r1, roughness);\n\tfloat s = mipInfo.y;\n\tfloat level0 = mipInfo.x;\n\tfloat level1 = level0 + 1.0;\n\tlevel1 = level1 > 5.0 ? 5.0 : level1;\n\tlevel0 += min( floor( s + 0.5 ), 5.0 );\n\tvec2 uv_10 = getCubeUV(reflectedDirection, r1, level0);\n\tvec4 color10 = envMapTexelToLinear(texture2D(envMap, uv_10));\n\tvec2 uv_20 = getCubeUV(reflectedDirection, r2, level0);\n\tvec4 color20 = envMapTexelToLinear(texture2D(envMap, uv_20));\n\tvec4 result = mix(color10, color20, t);\n\treturn vec4(result.rgb, 1.0);\n}\n#endif\n";
+	var cube_uv_reflection_fragment = "#ifdef ENVMAP_TYPE_CUBE_UV\n#define cubeUV_textureSize (1024.0)\nint getFaceFromDirection(vec3 direction) {\n\tvec3 absDirection = abs(direction);\n\tint face = -1;\n\tif( absDirection.x > absDirection.z ) {\n\t\tif(absDirection.x > absDirection.y )\n\t\t\tface = direction.x > 0.0 ? 0 : 3;\n\t\telse\n\t\t\tface = direction.y > 0.0 ? 1 : 4;\n\t}\n\telse {\n\t\tif(absDirection.z > absDirection.y )\n\t\t\tface = direction.z > 0.0 ? 2 : 5;\n\t\telse\n\t\t\tface = direction.y > 0.0 ? 1 : 4;\n\t}\n\treturn face;\n}\n#define cubeUV_maxLods1  (log2(cubeUV_textureSize*0.25) - 1.0)\n#define cubeUV_rangeClamp (exp2((6.0 - 1.0) * 2.0))\nvec2 MipLevelInfo( vec3 vec, float roughnessLevel, float roughness ) {\n\tfloat scale = exp2(cubeUV_maxLods1 - roughnessLevel);\n\tfloat dxRoughness = dFdx(roughness);\n\tfloat dyRoughness = dFdy(roughness);\n\tvec3 dx = dFdx( vec * scale * dxRoughness );\n\tvec3 dy = dFdy( vec * scale * dyRoughness );\n\tfloat d = max( dot( dx, dx ), dot( dy, dy ) );\n\td = clamp(d, 1.0, cubeUV_rangeClamp);\n\tfloat mipLevel = 0.5 * log2(d);\n\treturn vec2(floor(mipLevel), fract(mipLevel));\n}\n#define cubeUV_maxLods2 (log2(cubeUV_textureSize*0.25) - 2.0)\n#define cubeUV_rcpTextureSize (1.0 / cubeUV_textureSize)\nvec2 getCubeUV(vec3 direction, float roughnessLevel, float mipLevel) {\n\tmipLevel = roughnessLevel > cubeUV_maxLods2 - 3.0 ? 0.0 : mipLevel;\n\tfloat a = 16.0 * cubeUV_rcpTextureSize;\n\tvec2 exp2_packed = exp2( vec2( roughnessLevel, mipLevel ) );\n\tvec2 rcp_exp2_packed = vec2( 1.0 ) / exp2_packed;\n\tfloat powScale = exp2_packed.x * exp2_packed.y;\n\tfloat scale = rcp_exp2_packed.x * rcp_exp2_packed.y * 0.25;\n\tfloat mipOffset = 0.75*(1.0 - rcp_exp2_packed.y) * rcp_exp2_packed.x;\n\tbool bRes = mipLevel == 0.0;\n\tscale =  bRes && (scale < a) ? a : scale;\n\tvec3 r;\n\tvec2 offset;\n\tint face = getFaceFromDirection(direction);\n\tfloat rcpPowScale = 1.0 / powScale;\n\tif( face == 0) {\n\t\tr = vec3(direction.x, -direction.z, direction.y);\n\t\toffset = vec2(0.0+mipOffset,0.75 * rcpPowScale);\n\t\toffset.y = bRes && (offset.y < 2.0*a) ?  a : offset.y;\n\t}\n\telse if( face == 1) {\n\t\tr = vec3(direction.y, direction.x, direction.z);\n\t\toffset = vec2(scale+mipOffset, 0.75 * rcpPowScale);\n\t\toffset.y = bRes && (offset.y < 2.0*a) ?  a : offset.y;\n\t}\n\telse if( face == 2) {\n\t\tr = vec3(direction.z, direction.x, direction.y);\n\t\toffset = vec2(2.0*scale+mipOffset, 0.75 * rcpPowScale);\n\t\toffset.y = bRes && (offset.y < 2.0*a) ?  a : offset.y;\n\t}\n\telse if( face == 3) {\n\t\tr = vec3(direction.x, direction.z, direction.y);\n\t\toffset = vec2(0.0+mipOffset,0.5 * rcpPowScale);\n\t\toffset.y = bRes && (offset.y < 2.0*a) ?  0.0 : offset.y;\n\t}\n\telse if( face == 4) {\n\t\tr = vec3(direction.y, direction.x, -direction.z);\n\t\toffset = vec2(scale+mipOffset, 0.5 * rcpPowScale);\n\t\toffset.y = bRes && (offset.y < 2.0*a) ?  0.0 : offset.y;\n\t}\n\telse {\n\t\tr = vec3(direction.z, -direction.x, direction.y);\n\t\toffset = vec2(2.0*scale+mipOffset, 0.5 * rcpPowScale);\n\t\toffset.y = bRes && (offset.y < 2.0*a) ?  0.0 : offset.y;\n\t}\n\tr = normalize(r);\n\tfloat texelOffset = 0.5 * cubeUV_rcpTextureSize;\n\tvec2 s = ( r.yz / abs( r.x ) + vec2( 1.0 ) ) * 0.5;\n\tvec2 base = offset + vec2( texelOffset );\n\treturn base + s * ( scale - 2.0 * texelOffset );\n}\n#define cubeUV_maxLods3 (log2(cubeUV_textureSize*0.25) - 3.0)\nvec4 textureCubeUV(vec3 reflectedDirection, float roughness ) {\n\tfloat roughnessVal = roughness* cubeUV_maxLods3;\n\tfloat r1 = floor(roughnessVal);\n\tfloat r2 = r1 + 1.0;\n\tfloat t = fract(roughnessVal);\n\tvec2 mipInfo = MipLevelInfo(reflectedDirection, r1, roughness);\n\tfloat s = mipInfo.y;\n\tfloat level0 = mipInfo.x;\n\tfloat level1 = level0 + 1.0;\n\tlevel1 = level1 > 5.0 ? 5.0 : level1;\n\tlevel0 += min( floor( s + 0.5 ), 5.0 );\n\tvec2 uv_10 = getCubeUV(reflectedDirection, r1, level0);\n\tvec4 color10 = envMapTexelToLinear(texture2D(envMap, uv_10));\n\tvec2 uv_20 = getCubeUV(reflectedDirection, r2, level0);\n\tvec4 color20 = envMapTexelToLinear(texture2D(envMap, uv_20));\n\tvec4 result = mix(color10, color20, t);\n\treturn vec4(result.rgb, 1.0);\n}\n#endif\n";
 
 	var defaultnormal_vertex = "#ifdef FLIP_SIDED\n\tobjectNormal = -objectNormal;\n#endif\nvec3 transformedNormal = normalMatrix * objectNormal;\n";
 
@@ -4957,7 +5030,7 @@
 
 	var encodings_fragment = "  gl_FragColor = linearToOutputTexel( gl_FragColor );\n";
 
-	var encodings_pars_fragment = "\nvec4 LinearToLinear( in vec4 value ) {\n\treturn value;\n}\nvec4 GammaToLinear( in vec4 value, in float gammaFactor ) {\n\treturn vec4( pow( value.xyz, vec3( gammaFactor ) ), value.w );\n}\nvec4 LinearToGamma( in vec4 value, in float gammaFactor ) {\n\treturn vec4( pow( value.xyz, vec3( 1.0 / gammaFactor ) ), value.w );\n}\nvec4 sRGBToLinear( in vec4 value ) {\n\treturn vec4( mix( pow( value.rgb * 0.9478672986 + vec3( 0.0521327014 ), vec3( 2.4 ) ), value.rgb * 0.0773993808, vec3( lessThanEqual( value.rgb, vec3( 0.04045 ) ) ) ), value.w );\n}\nvec4 LinearTosRGB( in vec4 value ) {\n\treturn vec4( mix( pow( value.rgb, vec3( 0.41666 ) ) * 1.055 - vec3( 0.055 ), value.rgb * 12.92, vec3( lessThanEqual( value.rgb, vec3( 0.0031308 ) ) ) ), value.w );\n}\nvec4 RGBEToLinear( in vec4 value ) {\n\treturn vec4( value.rgb * exp2( value.a * 255.0 - 128.0 ), 1.0 );\n}\nvec4 LinearToRGBE( in vec4 value ) {\n\tfloat maxComponent = max( max( value.r, value.g ), value.b );\n\tfloat fExp = clamp( ceil( log2( maxComponent ) ), -128.0, 127.0 );\n\treturn vec4( value.rgb / exp2( fExp ), ( fExp + 128.0 ) / 255.0 );\n}\nvec4 RGBMToLinear( in vec4 value, in float maxRange ) {\n\treturn vec4( value.xyz * value.w * maxRange, 1.0 );\n}\nvec4 LinearToRGBM( in vec4 value, in float maxRange ) {\n\tfloat maxRGB = max( value.x, max( value.g, value.b ) );\n\tfloat M      = clamp( maxRGB / maxRange, 0.0, 1.0 );\n\tM            = ceil( M * 255.0 ) / 255.0;\n\treturn vec4( value.rgb / ( M * maxRange ), M );\n}\nvec4 RGBDToLinear( in vec4 value, in float maxRange ) {\n\treturn vec4( value.rgb * ( ( maxRange / 255.0 ) / value.a ), 1.0 );\n}\nvec4 LinearToRGBD( in vec4 value, in float maxRange ) {\n\tfloat maxRGB = max( value.x, max( value.g, value.b ) );\n\tfloat D      = max( maxRange / maxRGB, 1.0 );\n\tD            = min( floor( D ) / 255.0, 1.0 );\n\treturn vec4( value.rgb * ( D * ( 255.0 / maxRange ) ), D );\n}\nconst mat3 cLogLuvM = mat3( 0.2209, 0.3390, 0.4184, 0.1138, 0.6780, 0.7319, 0.0102, 0.1130, 0.2969 );\nvec4 LinearToLogLuv( in vec4 value )  {\n\tvec3 Xp_Y_XYZp = value.rgb * cLogLuvM;\n\tXp_Y_XYZp = max(Xp_Y_XYZp, vec3(1e-6, 1e-6, 1e-6));\n\tvec4 vResult;\n\tvResult.xy = Xp_Y_XYZp.xy / Xp_Y_XYZp.z;\n\tfloat Le = 2.0 * log2(Xp_Y_XYZp.y) + 127.0;\n\tvResult.w = fract(Le);\n\tvResult.z = (Le - (floor(vResult.w*255.0))/255.0)/255.0;\n\treturn vResult;\n}\nconst mat3 cLogLuvInverseM = mat3( 6.0014, -2.7008, -1.7996, -1.3320, 3.1029, -5.7721, 0.3008, -1.0882, 5.6268 );\nvec4 LogLuvToLinear( in vec4 value ) {\n\tfloat Le = value.z * 255.0 + value.w;\n\tvec3 Xp_Y_XYZp;\n\tXp_Y_XYZp.y = exp2((Le - 127.0) / 2.0);\n\tXp_Y_XYZp.z = Xp_Y_XYZp.y / value.y;\n\tXp_Y_XYZp.x = value.x * Xp_Y_XYZp.z;\n\tvec3 vRGB = Xp_Y_XYZp.rgb * cLogLuvInverseM;\n\treturn vec4( max(vRGB, 0.0), 1.0 );\n}\n";
+	var encodings_pars_fragment = "\nvec4 LinearToLinear( in vec4 value ) {\n  return value;\n}\nvec4 GammaToLinear( in vec4 value, in float gammaFactor ) {\n  return vec4( pow( value.xyz, vec3( gammaFactor ) ), value.w );\n}\nvec4 LinearToGamma( in vec4 value, in float gammaFactor ) {\n  return vec4( pow( value.xyz, vec3( 1.0 / gammaFactor ) ), value.w );\n}\nvec4 sRGBToLinear( in vec4 value ) {\n  return vec4( mix( pow( value.rgb * 0.9478672986 + vec3( 0.0521327014 ), vec3( 2.4 ) ), value.rgb * 0.0773993808, vec3( lessThanEqual( value.rgb, vec3( 0.04045 ) ) ) ), value.w );\n}\nvec4 LinearTosRGB( in vec4 value ) {\n  return vec4( mix( pow( value.rgb, vec3( 0.41666 ) ) * 1.055 - vec3( 0.055 ), value.rgb * 12.92, vec3( lessThanEqual( value.rgb, vec3( 0.0031308 ) ) ) ), value.w );\n}\nvec4 RGBEToLinear( in vec4 value ) {\n  return vec4( value.rgb * exp2( value.a * 255.0 - 128.0 ), 1.0 );\n}\nvec4 LinearToRGBE( in vec4 value ) {\n  float maxComponent = max( max( value.r, value.g ), value.b );\n  float fExp = clamp( ceil( log2( maxComponent ) ), -128.0, 127.0 );\n  return vec4( value.rgb / exp2( fExp ), ( fExp + 128.0 ) / 255.0 );\n}\nvec4 RGBMToLinear( in vec4 value, in float maxRange ) {\n  return vec4( value.xyz * value.w * maxRange, 1.0 );\n}\nvec4 LinearToRGBM( in vec4 value, in float maxRange ) {\n  float maxRGB = max( value.x, max( value.g, value.b ) );\n  float M      = clamp( maxRGB / maxRange, 0.0, 1.0 );\n  M            = ceil( M * 255.0 ) / 255.0;\n  return vec4( value.rgb / ( M * maxRange ), M );\n}\nvec4 RGBDToLinear( in vec4 value, in float maxRange ) {\n    return vec4( value.rgb * ( ( maxRange / 255.0 ) / value.a ), 1.0 );\n}\nvec4 LinearToRGBD( in vec4 value, in float maxRange ) {\n    float maxRGB = max( value.x, max( value.g, value.b ) );\n    float D      = max( maxRange / maxRGB, 1.0 );\n    D            = min( floor( D ) / 255.0, 1.0 );\n    return vec4( value.rgb * ( D * ( 255.0 / maxRange ) ), D );\n}\nconst mat3 cLogLuvM = mat3( 0.2209, 0.3390, 0.4184, 0.1138, 0.6780, 0.7319, 0.0102, 0.1130, 0.2969 );\nvec4 LinearToLogLuv( in vec4 value )  {\n  vec3 Xp_Y_XYZp = value.rgb * cLogLuvM;\n  Xp_Y_XYZp = max(Xp_Y_XYZp, vec3(1e-6, 1e-6, 1e-6));\n  vec4 vResult;\n  vResult.xy = Xp_Y_XYZp.xy / Xp_Y_XYZp.z;\n  float Le = 2.0 * log2(Xp_Y_XYZp.y) + 127.0;\n  vResult.w = fract(Le);\n  vResult.z = (Le - (floor(vResult.w*255.0))/255.0)/255.0;\n  return vResult;\n}\nconst mat3 cLogLuvInverseM = mat3( 6.0014, -2.7008, -1.7996, -1.3320, 3.1029, -5.7721, 0.3008, -1.0882, 5.6268 );\nvec4 LogLuvToLinear( in vec4 value ) {\n  float Le = value.z * 255.0 + value.w;\n  vec3 Xp_Y_XYZp;\n  Xp_Y_XYZp.y = exp2((Le - 127.0) / 2.0);\n  Xp_Y_XYZp.z = Xp_Y_XYZp.y / value.y;\n  Xp_Y_XYZp.x = value.x * Xp_Y_XYZp.z;\n  vec3 vRGB = Xp_Y_XYZp.rgb * cLogLuvInverseM;\n  return vec4( max(vRGB, 0.0), 1.0 );\n}\n";
 
 	var envmap_fragment = "#ifdef USE_ENVMAP\n\t#if defined( USE_BUMPMAP ) || defined( USE_NORMALMAP ) || defined( PHONG )\n\t\tvec3 cameraToVertex = normalize( vWorldPosition - cameraPosition );\n\t\tvec3 worldNormal = inverseTransformDirection( normal, viewMatrix );\n\t\t#ifdef ENVMAP_MODE_REFLECTION\n\t\t\tvec3 reflectVec = reflect( cameraToVertex, worldNormal );\n\t\t#else\n\t\t\tvec3 reflectVec = refract( cameraToVertex, worldNormal, refractionRatio );\n\t\t#endif\n\t#else\n\t\tvec3 reflectVec = vReflect;\n\t#endif\n\t#ifdef ENVMAP_TYPE_CUBE\n\t\tvec4 envColor = textureCube( envMap, flipNormal * vec3( flipEnvMap * reflectVec.x, reflectVec.yz ) );\n\t#elif defined( ENVMAP_TYPE_EQUIREC )\n\t\tvec2 sampleUV;\n\t\tsampleUV.y = saturate( flipNormal * reflectVec.y * 0.5 + 0.5 );\n\t\tsampleUV.x = atan( flipNormal * reflectVec.z, flipNormal * reflectVec.x ) * RECIPROCAL_PI2 + 0.5;\n\t\tvec4 envColor = texture2D( envMap, sampleUV );\n\t#elif defined( ENVMAP_TYPE_SPHERE )\n\t\tvec3 reflectView = flipNormal * normalize( ( viewMatrix * vec4( reflectVec, 0.0 ) ).xyz + vec3( 0.0, 0.0, 1.0 ) );\n\t\tvec4 envColor = texture2D( envMap, reflectView.xy * 0.5 + 0.5 );\n\t#else\n\t\tvec4 envColor = vec4( 0.0 );\n\t#endif\n\tenvColor = envMapTexelToLinear( envColor );\n\t#ifdef ENVMAP_BLENDING_MULTIPLY\n\t\toutgoingLight = mix( outgoingLight, outgoingLight * envColor.xyz, specularStrength * reflectivity );\n\t#elif defined( ENVMAP_BLENDING_MIX )\n\t\toutgoingLight = mix( outgoingLight, envColor.xyz, specularStrength * reflectivity );\n\t#elif defined( ENVMAP_BLENDING_ADD )\n\t\toutgoingLight += envColor.xyz * specularStrength * reflectivity;\n\t#endif\n#endif\n";
 
@@ -4977,19 +5050,19 @@
 
 	var lightmap_pars_fragment = "#ifdef USE_LIGHTMAP\n\tuniform sampler2D lightMap;\n\tuniform float lightMapIntensity;\n#endif";
 
-	var lights_lambert_vertex = "vec3 diffuse = vec3( 1.0 );\nGeometricContext geometry;\ngeometry.position = mvPosition.xyz;\ngeometry.normal = normalize( transformedNormal );\ngeometry.viewDir = normalize( -mvPosition.xyz );\nGeometricContext backGeometry;\nbackGeometry.position = geometry.position;\nbackGeometry.normal = -geometry.normal;\nbackGeometry.viewDir = geometry.viewDir;\nvLightFront = vec3( 0.0 );\n#ifdef DOUBLE_SIDED\n\tvLightBack = vec3( 0.0 );\n#endif\nIncidentLight directLight;\nfloat dotNL;\nvec3 directLightColor_Diffuse;\n#if NUM_POINT_LIGHTS > 0\n\tfor ( int i = 0; i < NUM_POINT_LIGHTS; i ++ ) {\n\t\tgetPointDirectLightIrradiance( pointLights[ i ], geometry, directLight );\n\t\tdotNL = dot( geometry.normal, directLight.direction );\n\t\tdirectLightColor_Diffuse = PI * directLight.color;\n\t\tvLightFront += saturate( dotNL ) * directLightColor_Diffuse;\n\t\t#ifdef DOUBLE_SIDED\n\t\t\tvLightBack += saturate( -dotNL ) * directLightColor_Diffuse;\n\t\t#endif\n\t}\n#endif\n#if NUM_SPOT_LIGHTS > 0\n\tfor ( int i = 0; i < NUM_SPOT_LIGHTS; i ++ ) {\n\t\tgetSpotDirectLightIrradiance( spotLights[ i ], geometry, directLight );\n\t\tdotNL = dot( geometry.normal, directLight.direction );\n\t\tdirectLightColor_Diffuse = PI * directLight.color;\n\t\tvLightFront += saturate( dotNL ) * directLightColor_Diffuse;\n\t\t#ifdef DOUBLE_SIDED\n\t\t\tvLightBack += saturate( -dotNL ) * directLightColor_Diffuse;\n\t\t#endif\n\t}\n#endif\n#if NUM_DIR_LIGHTS > 0\n\tfor ( int i = 0; i < NUM_DIR_LIGHTS; i ++ ) {\n\t\tgetDirectionalDirectLightIrradiance( directionalLights[ i ], geometry, directLight );\n\t\tdotNL = dot( geometry.normal, directLight.direction );\n\t\tdirectLightColor_Diffuse = PI * directLight.color;\n\t\tvLightFront += saturate( dotNL ) * directLightColor_Diffuse;\n\t\t#ifdef DOUBLE_SIDED\n\t\t\tvLightBack += saturate( -dotNL ) * directLightColor_Diffuse;\n\t\t#endif\n\t}\n#endif\n#if NUM_HEMI_LIGHTS > 0\n\tfor ( int i = 0; i < NUM_HEMI_LIGHTS; i ++ ) {\n\t\tvLightFront += getHemisphereLightIrradiance( hemisphereLights[ i ], geometry );\n\t\t#ifdef DOUBLE_SIDED\n\t\t\tvLightBack += getHemisphereLightIrradiance( hemisphereLights[ i ], backGeometry );\n\t\t#endif\n\t}\n#endif\n";
+	var lights_lambert_vertex = "vec3 diffuse = vec3( 1.0 );\nGeometricContext geometry;\ngeometry.position = mvPosition.xyz;\ngeometry.normal = normalize( transformedNormal );\ngeometry.viewDir = normalize( -mvPosition.xyz );\nGeometricContext backGeometry;\nbackGeometry.position = geometry.position;\nbackGeometry.normal = -geometry.normal;\nbackGeometry.viewDir = geometry.viewDir;\nvLightFront = vec3( 0.0 );\n#ifdef DOUBLE_SIDED\n\tvLightBack = vec3( 0.0 );\n#endif\nIncidentLight directLight;\nfloat dotNL;\nvec3 directLightColor_Diffuse;\n#if NUM_POINT_LIGHTS > 0\n\tfor ( int i = 0; i < NUM_POINT_LIGHTS; i ++ ) {\n\t\tgetPointDirectLightIrradiance( pointLights[ i ], geometry, directLight );\n\t\tdotNL = dot( geometry.normal, directLight.direction );\n\t\tdirectLightColor_Diffuse = PI * directLight.color;\n\t\tvLightFront += saturate( dotNL ) * directLightColor_Diffuse;\n\t\t#ifdef DOUBLE_SIDED\n\t\t\tvLightBack += saturate( -dotNL ) * directLightColor_Diffuse;\n\t\t#endif\n\t}\n#endif\n#if NUM_SPOT_LIGHTS > 0\n\tfor ( int i = 0; i < NUM_SPOT_LIGHTS; i ++ ) {\n\t\tgetSpotDirectLightIrradiance( spotLights[ i ], geometry, directLight );\n\t\tdotNL = dot( geometry.normal, directLight.direction );\n\t\tdirectLightColor_Diffuse = PI * directLight.color;\n\t\tvLightFront += saturate( dotNL ) * directLightColor_Diffuse;\n\t\t#ifdef DOUBLE_SIDED\n\t\t\tvLightBack += saturate( -dotNL ) * directLightColor_Diffuse;\n\t\t#endif\n\t}\n#endif\n#if NUM_RECT_AREA_LIGHTS > 0\n\tfor ( int i = 0; i < NUM_RECT_AREA_LIGHTS; i ++ ) {\n\t}\n#endif\n#if NUM_DIR_LIGHTS > 0\n\tfor ( int i = 0; i < NUM_DIR_LIGHTS; i ++ ) {\n\t\tgetDirectionalDirectLightIrradiance( directionalLights[ i ], geometry, directLight );\n\t\tdotNL = dot( geometry.normal, directLight.direction );\n\t\tdirectLightColor_Diffuse = PI * directLight.color;\n\t\tvLightFront += saturate( dotNL ) * directLightColor_Diffuse;\n\t\t#ifdef DOUBLE_SIDED\n\t\t\tvLightBack += saturate( -dotNL ) * directLightColor_Diffuse;\n\t\t#endif\n\t}\n#endif\n#if NUM_HEMI_LIGHTS > 0\n\tfor ( int i = 0; i < NUM_HEMI_LIGHTS; i ++ ) {\n\t\tvLightFront += getHemisphereLightIrradiance( hemisphereLights[ i ], geometry );\n\t\t#ifdef DOUBLE_SIDED\n\t\t\tvLightBack += getHemisphereLightIrradiance( hemisphereLights[ i ], backGeometry );\n\t\t#endif\n\t}\n#endif\n";
 
 	var lights_pars = "uniform vec3 ambientLightColor;\nvec3 getAmbientLightIrradiance( const in vec3 ambientLightColor ) {\n\tvec3 irradiance = ambientLightColor;\n\t#ifndef PHYSICALLY_CORRECT_LIGHTS\n\t\tirradiance *= PI;\n\t#endif\n\treturn irradiance;\n}\n#if NUM_DIR_LIGHTS > 0\n\tstruct DirectionalLight {\n\t\tvec3 direction;\n\t\tvec3 color;\n\t\tint shadow;\n\t\tfloat shadowBias;\n\t\tfloat shadowRadius;\n\t\tvec2 shadowMapSize;\n\t};\n\tuniform DirectionalLight directionalLights[ NUM_DIR_LIGHTS ];\n\tvoid getDirectionalDirectLightIrradiance( const in DirectionalLight directionalLight, const in GeometricContext geometry, out IncidentLight directLight ) {\n\t\tdirectLight.color = directionalLight.color;\n\t\tdirectLight.direction = directionalLight.direction;\n\t\tdirectLight.visible = true;\n\t}\n#endif\n#if NUM_POINT_LIGHTS > 0\n\tstruct PointLight {\n\t\tvec3 position;\n\t\tvec3 color;\n\t\tfloat distance;\n\t\tfloat decay;\n\t\tint shadow;\n\t\tfloat shadowBias;\n\t\tfloat shadowRadius;\n\t\tvec2 shadowMapSize;\n\t};\n\tuniform PointLight pointLights[ NUM_POINT_LIGHTS ];\n\tvoid getPointDirectLightIrradiance( const in PointLight pointLight, const in GeometricContext geometry, out IncidentLight directLight ) {\n\t\tvec3 lVector = pointLight.position - geometry.position;\n\t\tdirectLight.direction = normalize( lVector );\n\t\tfloat lightDistance = length( lVector );\n\t\tdirectLight.color = pointLight.color;\n\t\tdirectLight.color *= punctualLightIntensityToIrradianceFactor( lightDistance, pointLight.distance, pointLight.decay );\n\t\tdirectLight.visible = ( directLight.color != vec3( 0.0 ) );\n\t}\n#endif\n#if NUM_SPOT_LIGHTS > 0\n\tstruct SpotLight {\n\t\tvec3 position;\n\t\tvec3 direction;\n\t\tvec3 color;\n\t\tfloat distance;\n\t\tfloat decay;\n\t\tfloat coneCos;\n\t\tfloat penumbraCos;\n\t\tint shadow;\n\t\tfloat shadowBias;\n\t\tfloat shadowRadius;\n\t\tvec2 shadowMapSize;\n\t};\n\tuniform SpotLight spotLights[ NUM_SPOT_LIGHTS ];\n\tvoid getSpotDirectLightIrradiance( const in SpotLight spotLight, const in GeometricContext geometry, out IncidentLight directLight  ) {\n\t\tvec3 lVector = spotLight.position - geometry.position;\n\t\tdirectLight.direction = normalize( lVector );\n\t\tfloat lightDistance = length( lVector );\n\t\tfloat angleCos = dot( directLight.direction, spotLight.direction );\n\t\tif ( angleCos > spotLight.coneCos ) {\n\t\t\tfloat spotEffect = smoothstep( spotLight.coneCos, spotLight.penumbraCos, angleCos );\n\t\t\tdirectLight.color = spotLight.color;\n\t\t\tdirectLight.color *= spotEffect * punctualLightIntensityToIrradianceFactor( lightDistance, spotLight.distance, spotLight.decay );\n\t\t\tdirectLight.visible = true;\n\t\t} else {\n\t\t\tdirectLight.color = vec3( 0.0 );\n\t\t\tdirectLight.visible = false;\n\t\t}\n\t}\n#endif\n#if NUM_RECT_AREA_LIGHTS > 0\n\tstruct RectAreaLight {\n\t\tvec3 color;\n\t\tvec3 position;\n\t\tvec3 halfWidth;\n\t\tvec3 halfHeight;\n\t};\n\tuniform sampler2D ltcMat;\tuniform sampler2D ltcMag;\n\tuniform RectAreaLight rectAreaLights[ NUM_RECT_AREA_LIGHTS ];\n#endif\n#if NUM_HEMI_LIGHTS > 0\n\tstruct HemisphereLight {\n\t\tvec3 direction;\n\t\tvec3 skyColor;\n\t\tvec3 groundColor;\n\t};\n\tuniform HemisphereLight hemisphereLights[ NUM_HEMI_LIGHTS ];\n\tvec3 getHemisphereLightIrradiance( const in HemisphereLight hemiLight, const in GeometricContext geometry ) {\n\t\tfloat dotNL = dot( geometry.normal, hemiLight.direction );\n\t\tfloat hemiDiffuseWeight = 0.5 * dotNL + 0.5;\n\t\tvec3 irradiance = mix( hemiLight.groundColor, hemiLight.skyColor, hemiDiffuseWeight );\n\t\t#ifndef PHYSICALLY_CORRECT_LIGHTS\n\t\t\tirradiance *= PI;\n\t\t#endif\n\t\treturn irradiance;\n\t}\n#endif\n#if defined( USE_ENVMAP ) && defined( PHYSICAL )\n\tvec3 getLightProbeIndirectIrradiance( const in GeometricContext geometry, const in int maxMIPLevel ) {\n\t\tvec3 worldNormal = inverseTransformDirection( geometry.normal, viewMatrix );\n\t\t#ifdef ENVMAP_TYPE_CUBE\n\t\t\tvec3 queryVec = vec3( flipEnvMap * worldNormal.x, worldNormal.yz );\n\t\t\t#ifdef TEXTURE_LOD_EXT\n\t\t\t\tvec4 envMapColor = textureCubeLodEXT( envMap, queryVec, float( maxMIPLevel ) );\n\t\t\t#else\n\t\t\t\tvec4 envMapColor = textureCube( envMap, queryVec, float( maxMIPLevel ) );\n\t\t\t#endif\n\t\t\tenvMapColor.rgb = envMapTexelToLinear( envMapColor ).rgb;\n\t\t#elif defined( ENVMAP_TYPE_CUBE_UV )\n\t\t\tvec3 queryVec = vec3( flipEnvMap * worldNormal.x, worldNormal.yz );\n\t\t\tvec4 envMapColor = textureCubeUV( queryVec, 1.0 );\n\t\t#else\n\t\t\tvec4 envMapColor = vec4( 0.0 );\n\t\t#endif\n\t\treturn PI * envMapColor.rgb * envMapIntensity;\n\t}\n\tfloat getSpecularMIPLevel( const in float blinnShininessExponent, const in int maxMIPLevel ) {\n\t\tfloat maxMIPLevelScalar = float( maxMIPLevel );\n\t\tfloat desiredMIPLevel = maxMIPLevelScalar - 0.79248 - 0.5 * log2( pow2( blinnShininessExponent ) + 1.0 );\n\t\treturn clamp( desiredMIPLevel, 0.0, maxMIPLevelScalar );\n\t}\n\tvec3 getLightProbeIndirectRadiance( const in GeometricContext geometry, const in float blinnShininessExponent, const in int maxMIPLevel ) {\n\t\t#ifdef ENVMAP_MODE_REFLECTION\n\t\t\tvec3 reflectVec = reflect( -geometry.viewDir, geometry.normal );\n\t\t#else\n\t\t\tvec3 reflectVec = refract( -geometry.viewDir, geometry.normal, refractionRatio );\n\t\t#endif\n\t\treflectVec = inverseTransformDirection( reflectVec, viewMatrix );\n\t\tfloat specularMIPLevel = getSpecularMIPLevel( blinnShininessExponent, maxMIPLevel );\n\t\t#ifdef ENVMAP_TYPE_CUBE\n\t\t\tvec3 queryReflectVec = vec3( flipEnvMap * reflectVec.x, reflectVec.yz );\n\t\t\t#ifdef TEXTURE_LOD_EXT\n\t\t\t\tvec4 envMapColor = textureCubeLodEXT( envMap, queryReflectVec, specularMIPLevel );\n\t\t\t#else\n\t\t\t\tvec4 envMapColor = textureCube( envMap, queryReflectVec, specularMIPLevel );\n\t\t\t#endif\n\t\t\tenvMapColor.rgb = envMapTexelToLinear( envMapColor ).rgb;\n\t\t#elif defined( ENVMAP_TYPE_CUBE_UV )\n\t\t\tvec3 queryReflectVec = vec3( flipEnvMap * reflectVec.x, reflectVec.yz );\n\t\t\tvec4 envMapColor = textureCubeUV(queryReflectVec, BlinnExponentToGGXRoughness(blinnShininessExponent));\n\t\t#elif defined( ENVMAP_TYPE_EQUIREC )\n\t\t\tvec2 sampleUV;\n\t\t\tsampleUV.y = saturate( reflectVec.y * 0.5 + 0.5 );\n\t\t\tsampleUV.x = atan( reflectVec.z, reflectVec.x ) * RECIPROCAL_PI2 + 0.5;\n\t\t\t#ifdef TEXTURE_LOD_EXT\n\t\t\t\tvec4 envMapColor = texture2DLodEXT( envMap, sampleUV, specularMIPLevel );\n\t\t\t#else\n\t\t\t\tvec4 envMapColor = texture2D( envMap, sampleUV, specularMIPLevel );\n\t\t\t#endif\n\t\t\tenvMapColor.rgb = envMapTexelToLinear( envMapColor ).rgb;\n\t\t#elif defined( ENVMAP_TYPE_SPHERE )\n\t\t\tvec3 reflectView = normalize( ( viewMatrix * vec4( reflectVec, 0.0 ) ).xyz + vec3( 0.0,0.0,1.0 ) );\n\t\t\t#ifdef TEXTURE_LOD_EXT\n\t\t\t\tvec4 envMapColor = texture2DLodEXT( envMap, reflectView.xy * 0.5 + 0.5, specularMIPLevel );\n\t\t\t#else\n\t\t\t\tvec4 envMapColor = texture2D( envMap, reflectView.xy * 0.5 + 0.5, specularMIPLevel );\n\t\t\t#endif\n\t\t\tenvMapColor.rgb = envMapTexelToLinear( envMapColor ).rgb;\n\t\t#endif\n\t\treturn envMapColor.rgb * envMapIntensity;\n\t}\n#endif\n";
 
 	var lights_phong_fragment = "BlinnPhongMaterial material;\nmaterial.diffuseColor = diffuseColor.rgb;\nmaterial.specularColor = specular;\nmaterial.specularShininess = shininess;\nmaterial.specularStrength = specularStrength;\n";
 
-	var lights_phong_pars_fragment = "varying vec3 vViewPosition;\n#ifndef FLAT_SHADED\n\tvarying vec3 vNormal;\n#endif\nstruct BlinnPhongMaterial {\n\tvec3\tdiffuseColor;\n\tvec3\tspecularColor;\n\tfloat\tspecularShininess;\n\tfloat\tspecularStrength;\n};\n#if NUM_RECT_AREA_LIGHTS > 0\n\tvoid RE_Direct_RectArea_BlinnPhong( const in RectAreaLight rectAreaLight, const in GeometricContext geometry, const in BlinnPhongMaterial material, inout ReflectedLight reflectedLight ) {\n\t\tvec3 matDiffColor = material.diffuseColor;\n\t\tvec3 matSpecColor = material.specularColor;\n\t\tvec3 lightColor   = rectAreaLight.color;\n\t\tfloat roughness = BlinnExponentToGGXRoughness( material.specularShininess );\n\t\tvec3 spec = Rect_Area_Light_Specular_Reflectance(\n\t\t\t\tgeometry,\n\t\t\t\trectAreaLight.position, rectAreaLight.halfWidth, rectAreaLight.halfHeight,\n\t\t\t\troughness,\n\t\t\t\tltcMat, ltcMag );\n\t\tvec3 diff = Rect_Area_Light_Diffuse_Reflectance(\n\t\t\t\tgeometry,\n\t\t\t\trectAreaLight.position, rectAreaLight.halfWidth, rectAreaLight.halfHeight );\n\t\treflectedLight.directSpecular += lightColor * matSpecColor * spec / PI2;\n\t\treflectedLight.directDiffuse  += lightColor * matDiffColor * diff / PI2;\n\t}\n#endif\nvoid RE_Direct_BlinnPhong( const in IncidentLight directLight, const in GeometricContext geometry, const in BlinnPhongMaterial material, inout ReflectedLight reflectedLight ) {\n\t#ifdef TOON\n\t\tvec3 irradiance = getGradientIrradiance( geometry.normal, directLight.direction ) * directLight.color;\n\t#else\n\t\tfloat dotNL = saturate( dot( geometry.normal, directLight.direction ) );\n\t\tvec3 irradiance = dotNL * directLight.color;\n\t#endif\n\t#ifndef PHYSICALLY_CORRECT_LIGHTS\n\t\tirradiance *= PI;\n\t#endif\n\treflectedLight.directDiffuse += irradiance * BRDF_Diffuse_Lambert( material.diffuseColor );\n\treflectedLight.directSpecular += irradiance * BRDF_Specular_BlinnPhong( directLight, geometry, material.specularColor, material.specularShininess ) * material.specularStrength;\n}\nvoid RE_IndirectDiffuse_BlinnPhong( const in vec3 irradiance, const in GeometricContext geometry, const in BlinnPhongMaterial material, inout ReflectedLight reflectedLight ) {\n\treflectedLight.indirectDiffuse += irradiance * BRDF_Diffuse_Lambert( material.diffuseColor );\n}\n#define RE_Direct\t\t\t\tRE_Direct_BlinnPhong\n#define RE_Direct_RectArea\t\tRE_Direct_RectArea_BlinnPhong\n#define RE_IndirectDiffuse\t\tRE_IndirectDiffuse_BlinnPhong\n#define Material_LightProbeLOD( material )\t(0)\n";
+	var lights_phong_pars_fragment = "varying vec3 vViewPosition;\n#ifndef FLAT_SHADED\n\tvarying vec3 vNormal;\n#endif\nstruct BlinnPhongMaterial {\n\tvec3\tdiffuseColor;\n\tvec3\tspecularColor;\n\tfloat\tspecularShininess;\n\tfloat\tspecularStrength;\n};\n#if NUM_RECT_AREA_LIGHTS > 0\n    void RE_Direct_RectArea_BlinnPhong( const in RectAreaLight rectAreaLight, const in GeometricContext geometry, const in BlinnPhongMaterial material, inout ReflectedLight reflectedLight ) {\n        vec3 matDiffColor = material.diffuseColor;\n        vec3 matSpecColor = material.specularColor;\n        vec3 lightColor   = rectAreaLight.color;\n        float roughness = BlinnExponentToGGXRoughness( material.specularShininess );\n        vec3 spec = Rect_Area_Light_Specular_Reflectance(\n                geometry,\n                rectAreaLight.position, rectAreaLight.halfWidth, rectAreaLight.halfHeight,\n                roughness,\n                ltcMat, ltcMag );\n        vec3 diff = Rect_Area_Light_Diffuse_Reflectance(\n                geometry,\n                rectAreaLight.position, rectAreaLight.halfWidth, rectAreaLight.halfHeight );\n        reflectedLight.directSpecular += lightColor * matSpecColor * spec / PI2;\n        reflectedLight.directDiffuse  += lightColor * matDiffColor * diff / PI2;\n    }\n#endif\nvoid RE_Direct_BlinnPhong( const in IncidentLight directLight, const in GeometricContext geometry, const in BlinnPhongMaterial material, inout ReflectedLight reflectedLight ) {\n\t#ifdef TOON\n\t\tvec3 irradiance = getGradientIrradiance( geometry.normal, directLight.direction ) * directLight.color;\n\t#else\n\t\tfloat dotNL = saturate( dot( geometry.normal, directLight.direction ) );\n\t\tvec3 irradiance = dotNL * directLight.color;\n\t#endif\n\t#ifndef PHYSICALLY_CORRECT_LIGHTS\n\t\tirradiance *= PI;\n\t#endif\n\treflectedLight.directDiffuse += irradiance * BRDF_Diffuse_Lambert( material.diffuseColor );\n\treflectedLight.directSpecular += irradiance * BRDF_Specular_BlinnPhong( directLight, geometry, material.specularColor, material.specularShininess ) * material.specularStrength;\n}\nvoid RE_IndirectDiffuse_BlinnPhong( const in vec3 irradiance, const in GeometricContext geometry, const in BlinnPhongMaterial material, inout ReflectedLight reflectedLight ) {\n\treflectedLight.indirectDiffuse += irradiance * BRDF_Diffuse_Lambert( material.diffuseColor );\n}\n#define RE_Direct\t\t\t\tRE_Direct_BlinnPhong\n#define RE_Direct_RectArea\t\tRE_Direct_RectArea_BlinnPhong\n#define RE_IndirectDiffuse\t\tRE_IndirectDiffuse_BlinnPhong\n#define Material_LightProbeLOD( material )\t(0)\n";
 
 	var lights_physical_fragment = "PhysicalMaterial material;\nmaterial.diffuseColor = diffuseColor.rgb * ( 1.0 - metalnessFactor );\nmaterial.specularRoughness = clamp( roughnessFactor, 0.04, 1.0 );\n#ifdef STANDARD\n\tmaterial.specularColor = mix( vec3( DEFAULT_SPECULAR_COEFFICIENT ), diffuseColor.rgb, metalnessFactor );\n#else\n\tmaterial.specularColor = mix( vec3( MAXIMUM_SPECULAR_COEFFICIENT * pow2( reflectivity ) ), diffuseColor.rgb, metalnessFactor );\n\tmaterial.clearCoat = saturate( clearCoat );\tmaterial.clearCoatRoughness = clamp( clearCoatRoughness, 0.04, 1.0 );\n#endif\n";
 
-	var lights_physical_pars_fragment = "struct PhysicalMaterial {\n\tvec3\tdiffuseColor;\n\tfloat\tspecularRoughness;\n\tvec3\tspecularColor;\n\t#ifndef STANDARD\n\t\tfloat clearCoat;\n\t\tfloat clearCoatRoughness;\n\t#endif\n};\n#define MAXIMUM_SPECULAR_COEFFICIENT 0.16\n#define DEFAULT_SPECULAR_COEFFICIENT 0.04\nfloat clearCoatDHRApprox( const in float roughness, const in float dotNL ) {\n\treturn DEFAULT_SPECULAR_COEFFICIENT + ( 1.0 - DEFAULT_SPECULAR_COEFFICIENT ) * ( pow( 1.0 - dotNL, 5.0 ) * pow( 1.0 - roughness, 2.0 ) );\n}\n#if NUM_RECT_AREA_LIGHTS > 0\n\tvoid RE_Direct_RectArea_Physical( const in RectAreaLight rectAreaLight, const in GeometricContext geometry, const in PhysicalMaterial material, inout ReflectedLight reflectedLight ) {\n\t\tvec3 matDiffColor = material.diffuseColor;\n\t\tvec3 matSpecColor = material.specularColor;\n\t\tvec3 lightColor   = rectAreaLight.color;\n\t\tfloat roughness = material.specularRoughness;\n\t\tvec3 spec = Rect_Area_Light_Specular_Reflectance(\n\t\t\t\tgeometry,\n\t\t\t\trectAreaLight.position, rectAreaLight.halfWidth, rectAreaLight.halfHeight,\n\t\t\t\troughness,\n\t\t\t\tltcMat, ltcMag );\n\t\tvec3 diff = Rect_Area_Light_Diffuse_Reflectance(\n\t\t\t\tgeometry,\n\t\t\t\trectAreaLight.position, rectAreaLight.halfWidth, rectAreaLight.halfHeight );\n\t\treflectedLight.directSpecular += lightColor * matSpecColor * spec;\n\t\treflectedLight.directDiffuse  += lightColor * matDiffColor * diff;\n\t}\n#endif\nvoid RE_Direct_Physical( const in IncidentLight directLight, const in GeometricContext geometry, const in PhysicalMaterial material, inout ReflectedLight reflectedLight ) {\n\tfloat dotNL = saturate( dot( geometry.normal, directLight.direction ) );\n\tvec3 irradiance = dotNL * directLight.color;\n\t#ifndef PHYSICALLY_CORRECT_LIGHTS\n\t\tirradiance *= PI;\n\t#endif\n\t#ifndef STANDARD\n\t\tfloat clearCoatDHR = material.clearCoat * clearCoatDHRApprox( material.clearCoatRoughness, dotNL );\n\t#else\n\t\tfloat clearCoatDHR = 0.0;\n\t#endif\n\treflectedLight.directSpecular += ( 1.0 - clearCoatDHR ) * irradiance * BRDF_Specular_GGX( directLight, geometry, material.specularColor, material.specularRoughness );\n\treflectedLight.directDiffuse += ( 1.0 - clearCoatDHR ) * irradiance * BRDF_Diffuse_Lambert( material.diffuseColor );\n\t#ifndef STANDARD\n\t\treflectedLight.directSpecular += irradiance * material.clearCoat * BRDF_Specular_GGX( directLight, geometry, vec3( DEFAULT_SPECULAR_COEFFICIENT ), material.clearCoatRoughness );\n\t#endif\n}\nvoid RE_IndirectDiffuse_Physical( const in vec3 irradiance, const in GeometricContext geometry, const in PhysicalMaterial material, inout ReflectedLight reflectedLight ) {\n\treflectedLight.indirectDiffuse += irradiance * BRDF_Diffuse_Lambert( material.diffuseColor );\n}\nvoid RE_IndirectSpecular_Physical( const in vec3 radiance, const in vec3 clearCoatRadiance, const in GeometricContext geometry, const in PhysicalMaterial material, inout ReflectedLight reflectedLight ) {\n\t#ifndef STANDARD\n\t\tfloat dotNV = saturate( dot( geometry.normal, geometry.viewDir ) );\n\t\tfloat dotNL = dotNV;\n\t\tfloat clearCoatDHR = material.clearCoat * clearCoatDHRApprox( material.clearCoatRoughness, dotNL );\n\t#else\n\t\tfloat clearCoatDHR = 0.0;\n\t#endif\n\treflectedLight.indirectSpecular += ( 1.0 - clearCoatDHR ) * radiance * BRDF_Specular_GGX_Environment( geometry, material.specularColor, material.specularRoughness );\n\t#ifndef STANDARD\n\t\treflectedLight.indirectSpecular += clearCoatRadiance * material.clearCoat * BRDF_Specular_GGX_Environment( geometry, vec3( DEFAULT_SPECULAR_COEFFICIENT ), material.clearCoatRoughness );\n\t#endif\n}\n#define RE_Direct\t\t\t\tRE_Direct_Physical\n#define RE_Direct_RectArea\t\tRE_Direct_RectArea_Physical\n#define RE_IndirectDiffuse\t\tRE_IndirectDiffuse_Physical\n#define RE_IndirectSpecular\t\tRE_IndirectSpecular_Physical\n#define Material_BlinnShininessExponent( material )   GGXRoughnessToBlinnExponent( material.specularRoughness )\n#define Material_ClearCoat_BlinnShininessExponent( material )   GGXRoughnessToBlinnExponent( material.clearCoatRoughness )\nfloat computeSpecularOcclusion( const in float dotNV, const in float ambientOcclusion, const in float roughness ) {\n\treturn saturate( pow( dotNV + ambientOcclusion, exp2( - 16.0 * roughness - 1.0 ) ) - 1.0 + ambientOcclusion );\n}\n";
+	var lights_physical_pars_fragment = "struct PhysicalMaterial {\n\tvec3\tdiffuseColor;\n\tfloat\tspecularRoughness;\n\tvec3\tspecularColor;\n\t#ifndef STANDARD\n\t\tfloat clearCoat;\n\t\tfloat clearCoatRoughness;\n\t#endif\n};\n#define MAXIMUM_SPECULAR_COEFFICIENT 0.16\n#define DEFAULT_SPECULAR_COEFFICIENT 0.04\nfloat clearCoatDHRApprox( const in float roughness, const in float dotNL ) {\n\treturn DEFAULT_SPECULAR_COEFFICIENT + ( 1.0 - DEFAULT_SPECULAR_COEFFICIENT ) * ( pow( 1.0 - dotNL, 5.0 ) * pow( 1.0 - roughness, 2.0 ) );\n}\n#if NUM_RECT_AREA_LIGHTS > 0\n    void RE_Direct_RectArea_Physical( const in RectAreaLight rectAreaLight, const in GeometricContext geometry, const in PhysicalMaterial material, inout ReflectedLight reflectedLight ) {\n        vec3 matDiffColor = material.diffuseColor;\n        vec3 matSpecColor = material.specularColor;\n        vec3 lightColor   = rectAreaLight.color;\n        float roughness = material.specularRoughness;\n        vec3 spec = Rect_Area_Light_Specular_Reflectance(\n                geometry,\n                rectAreaLight.position, rectAreaLight.halfWidth, rectAreaLight.halfHeight,\n                roughness,\n                ltcMat, ltcMag );\n        vec3 diff = Rect_Area_Light_Diffuse_Reflectance(\n                geometry,\n                rectAreaLight.position, rectAreaLight.halfWidth, rectAreaLight.halfHeight );\n        reflectedLight.directSpecular += lightColor * matSpecColor * spec;\n        reflectedLight.directDiffuse  += lightColor * matDiffColor * diff;\n    }\n#endif\nvoid RE_Direct_Physical( const in IncidentLight directLight, const in GeometricContext geometry, const in PhysicalMaterial material, inout ReflectedLight reflectedLight ) {\n\tfloat dotNL = saturate( dot( geometry.normal, directLight.direction ) );\n\tvec3 irradiance = dotNL * directLight.color;\n\t#ifndef PHYSICALLY_CORRECT_LIGHTS\n\t\tirradiance *= PI;\n\t#endif\n\t#ifndef STANDARD\n\t\tfloat clearCoatDHR = material.clearCoat * clearCoatDHRApprox( material.clearCoatRoughness, dotNL );\n\t#else\n\t\tfloat clearCoatDHR = 0.0;\n\t#endif\n\treflectedLight.directSpecular += ( 1.0 - clearCoatDHR ) * irradiance * BRDF_Specular_GGX( directLight, geometry, material.specularColor, material.specularRoughness );\n\treflectedLight.directDiffuse += ( 1.0 - clearCoatDHR ) * irradiance * BRDF_Diffuse_Lambert( material.diffuseColor );\n\t#ifndef STANDARD\n\t\treflectedLight.directSpecular += irradiance * material.clearCoat * BRDF_Specular_GGX( directLight, geometry, vec3( DEFAULT_SPECULAR_COEFFICIENT ), material.clearCoatRoughness );\n\t#endif\n}\nvoid RE_IndirectDiffuse_Physical( const in vec3 irradiance, const in GeometricContext geometry, const in PhysicalMaterial material, inout ReflectedLight reflectedLight ) {\n\treflectedLight.indirectDiffuse += irradiance * BRDF_Diffuse_Lambert( material.diffuseColor );\n}\nvoid RE_IndirectSpecular_Physical( const in vec3 radiance, const in vec3 clearCoatRadiance, const in GeometricContext geometry, const in PhysicalMaterial material, inout ReflectedLight reflectedLight ) {\n\t#ifndef STANDARD\n\t\tfloat dotNV = saturate( dot( geometry.normal, geometry.viewDir ) );\n\t\tfloat dotNL = dotNV;\n\t\tfloat clearCoatDHR = material.clearCoat * clearCoatDHRApprox( material.clearCoatRoughness, dotNL );\n\t#else\n\t\tfloat clearCoatDHR = 0.0;\n\t#endif\n\treflectedLight.indirectSpecular += ( 1.0 - clearCoatDHR ) * radiance * BRDF_Specular_GGX_Environment( geometry, material.specularColor, material.specularRoughness );\n\t#ifndef STANDARD\n\t\treflectedLight.indirectSpecular += clearCoatRadiance * material.clearCoat * BRDF_Specular_GGX_Environment( geometry, vec3( DEFAULT_SPECULAR_COEFFICIENT ), material.clearCoatRoughness );\n\t#endif\n}\n#define RE_Direct\t\t\t\tRE_Direct_Physical\n#define RE_Direct_RectArea\t\tRE_Direct_RectArea_Physical\n#define RE_IndirectDiffuse\t\tRE_IndirectDiffuse_Physical\n#define RE_IndirectSpecular\t\tRE_IndirectSpecular_Physical\n#define Material_BlinnShininessExponent( material )   GGXRoughnessToBlinnExponent( material.specularRoughness )\n#define Material_ClearCoat_BlinnShininessExponent( material )   GGXRoughnessToBlinnExponent( material.clearCoatRoughness )\nfloat computeSpecularOcclusion( const in float dotNV, const in float ambientOcclusion, const in float roughness ) {\n\treturn saturate( pow( dotNV + ambientOcclusion, exp2( - 16.0 * roughness - 1.0 ) ) - 1.0 + ambientOcclusion );\n}\n";
 
-	var lights_template = "\nGeometricContext geometry;\ngeometry.position = - vViewPosition;\ngeometry.normal = normal;\ngeometry.viewDir = normalize( vViewPosition );\nIncidentLight directLight;\n#if ( NUM_POINT_LIGHTS > 0 ) && defined( RE_Direct )\n\tPointLight pointLight;\n\tfor ( int i = 0; i < NUM_POINT_LIGHTS; i ++ ) {\n\t\tpointLight = pointLights[ i ];\n\t\tgetPointDirectLightIrradiance( pointLight, geometry, directLight );\n\t\t#ifdef USE_SHADOWMAP\n\t\tdirectLight.color *= all( bvec2( pointLight.shadow, directLight.visible ) ) ? getPointShadow( pointShadowMap[ i ], pointLight.shadowMapSize, pointLight.shadowBias, pointLight.shadowRadius, vPointShadowCoord[ i ] ) : 1.0;\n\t\t#endif\n\t\tRE_Direct( directLight, geometry, material, reflectedLight );\n\t}\n#endif\n#if ( NUM_SPOT_LIGHTS > 0 ) && defined( RE_Direct )\n\tSpotLight spotLight;\n\tfor ( int i = 0; i < NUM_SPOT_LIGHTS; i ++ ) {\n\t\tspotLight = spotLights[ i ];\n\t\tgetSpotDirectLightIrradiance( spotLight, geometry, directLight );\n\t\t#ifdef USE_SHADOWMAP\n\t\tdirectLight.color *= all( bvec2( spotLight.shadow, directLight.visible ) ) ? getShadow( spotShadowMap[ i ], spotLight.shadowMapSize, spotLight.shadowBias, spotLight.shadowRadius, vSpotShadowCoord[ i ] ) : 1.0;\n\t\t#endif\n\t\tRE_Direct( directLight, geometry, material, reflectedLight );\n\t}\n#endif\n#if ( NUM_DIR_LIGHTS > 0 ) && defined( RE_Direct )\n\tDirectionalLight directionalLight;\n\tfor ( int i = 0; i < NUM_DIR_LIGHTS; i ++ ) {\n\t\tdirectionalLight = directionalLights[ i ];\n\t\tgetDirectionalDirectLightIrradiance( directionalLight, geometry, directLight );\n\t\t#ifdef USE_SHADOWMAP\n\t\tdirectLight.color *= all( bvec2( directionalLight.shadow, directLight.visible ) ) ? getShadow( directionalShadowMap[ i ], directionalLight.shadowMapSize, directionalLight.shadowBias, directionalLight.shadowRadius, vDirectionalShadowCoord[ i ] ) : 1.0;\n\t\t#endif\n\t\tRE_Direct( directLight, geometry, material, reflectedLight );\n\t}\n#endif\n#if ( NUM_RECT_AREA_LIGHTS > 0 ) && defined( RE_Direct_RectArea )\n\tRectAreaLight rectAreaLight;\n\tfor ( int i = 0; i < NUM_RECT_AREA_LIGHTS; i ++ ) {\n\t\trectAreaLight = rectAreaLights[ i ];\n\t\tRE_Direct_RectArea( rectAreaLight, geometry, material, reflectedLight );\n\t}\n#endif\n#if defined( RE_IndirectDiffuse )\n\tvec3 irradiance = getAmbientLightIrradiance( ambientLightColor );\n\t#ifdef USE_LIGHTMAP\n\t\tvec3 lightMapIrradiance = texture2D( lightMap, vUv2 ).xyz * lightMapIntensity;\n\t\t#ifndef PHYSICALLY_CORRECT_LIGHTS\n\t\t\tlightMapIrradiance *= PI;\n\t\t#endif\n\t\tirradiance += lightMapIrradiance;\n\t#endif\n\t#if ( NUM_HEMI_LIGHTS > 0 )\n\t\tfor ( int i = 0; i < NUM_HEMI_LIGHTS; i ++ ) {\n\t\t\tirradiance += getHemisphereLightIrradiance( hemisphereLights[ i ], geometry );\n\t\t}\n\t#endif\n\t#if defined( USE_ENVMAP ) && defined( PHYSICAL ) && defined( ENVMAP_TYPE_CUBE_UV )\n\t\tirradiance += getLightProbeIndirectIrradiance( geometry, 8 );\n\t#endif\n\tRE_IndirectDiffuse( irradiance, geometry, material, reflectedLight );\n#endif\n#if defined( USE_ENVMAP ) && defined( RE_IndirectSpecular )\n\tvec3 radiance = getLightProbeIndirectRadiance( geometry, Material_BlinnShininessExponent( material ), 8 );\n\t#ifndef STANDARD\n\t\tvec3 clearCoatRadiance = getLightProbeIndirectRadiance( geometry, Material_ClearCoat_BlinnShininessExponent( material ), 8 );\n\t#else\n\t\tvec3 clearCoatRadiance = vec3( 0.0 );\n\t#endif\n\tRE_IndirectSpecular( radiance, clearCoatRadiance, geometry, material, reflectedLight );\n#endif\n";
+	var lights_template = "\nGeometricContext geometry;\ngeometry.position = - vViewPosition;\ngeometry.normal = normal;\ngeometry.viewDir = normalize( vViewPosition );\nIncidentLight directLight;\n#if ( NUM_POINT_LIGHTS > 0 ) && defined( RE_Direct )\n\tPointLight pointLight;\n\tfor ( int i = 0; i < NUM_POINT_LIGHTS; i ++ ) {\n\t\tpointLight = pointLights[ i ];\n\t\tgetPointDirectLightIrradiance( pointLight, geometry, directLight );\n\t\t#ifdef USE_SHADOWMAP\n\t\tdirectLight.color *= all( bvec2( pointLight.shadow, directLight.visible ) ) ? getPointShadow( pointShadowMap[ i ], pointLight.shadowMapSize, pointLight.shadowBias, pointLight.shadowRadius, vPointShadowCoord[ i ] ) : 1.0;\n\t\t#endif\n\t\tRE_Direct( directLight, geometry, material, reflectedLight );\n\t}\n#endif\n#if ( NUM_SPOT_LIGHTS > 0 ) && defined( RE_Direct )\n\tSpotLight spotLight;\n\tfor ( int i = 0; i < NUM_SPOT_LIGHTS; i ++ ) {\n\t\tspotLight = spotLights[ i ];\n\t\tgetSpotDirectLightIrradiance( spotLight, geometry, directLight );\n\t\t#ifdef USE_SHADOWMAP\n\t\tdirectLight.color *= all( bvec2( spotLight.shadow, directLight.visible ) ) ? getShadow( spotShadowMap[ i ], spotLight.shadowMapSize, spotLight.shadowBias, spotLight.shadowRadius, vSpotShadowCoord[ i ] ) : 1.0;\n\t\t#endif\n\t\tRE_Direct( directLight, geometry, material, reflectedLight );\n\t}\n#endif\n#if ( NUM_DIR_LIGHTS > 0 ) && defined( RE_Direct )\n\tDirectionalLight directionalLight;\n\tfor ( int i = 0; i < NUM_DIR_LIGHTS; i ++ ) {\n\t\tdirectionalLight = directionalLights[ i ];\n\t\tgetDirectionalDirectLightIrradiance( directionalLight, geometry, directLight );\n\t\t#ifdef USE_SHADOWMAP\n\t\tdirectLight.color *= all( bvec2( directionalLight.shadow, directLight.visible ) ) ? getShadow( directionalShadowMap[ i ], directionalLight.shadowMapSize, directionalLight.shadowBias, directionalLight.shadowRadius, vDirectionalShadowCoord[ i ] ) : 1.0;\n\t\t#endif\n\t\tRE_Direct( directLight, geometry, material, reflectedLight );\n\t}\n#endif\n#if ( NUM_RECT_AREA_LIGHTS > 0 ) && defined( RE_Direct_RectArea )\n\tRectAreaLight rectAreaLight;\n\tfor ( int i = 0; i < NUM_RECT_AREA_LIGHTS; i ++ ) {\n\t\trectAreaLight = rectAreaLights[ i ];\n\t\tRE_Direct_RectArea( rectAreaLight, geometry, material, reflectedLight );\n\t}\n#endif\n#if defined( RE_IndirectDiffuse )\n\tvec3 irradiance = getAmbientLightIrradiance( ambientLightColor );\n\t#ifdef USE_LIGHTMAP\n\t\tvec3 lightMapIrradiance = texture2D( lightMap, vUv2 ).xyz * lightMapIntensity;\n\t\t#ifndef PHYSICALLY_CORRECT_LIGHTS\n\t\t\tlightMapIrradiance *= PI;\n\t\t#endif\n\t\tirradiance += lightMapIrradiance;\n\t#endif\n\t#if ( NUM_HEMI_LIGHTS > 0 )\n\t\tfor ( int i = 0; i < NUM_HEMI_LIGHTS; i ++ ) {\n\t\t\tirradiance += getHemisphereLightIrradiance( hemisphereLights[ i ], geometry );\n\t\t}\n\t#endif\n\t#if defined( USE_ENVMAP ) && defined( PHYSICAL ) && defined( ENVMAP_TYPE_CUBE_UV )\n\t \tirradiance += getLightProbeIndirectIrradiance( geometry, 8 );\n\t#endif\n\tRE_IndirectDiffuse( irradiance, geometry, material, reflectedLight );\n#endif\n#if defined( USE_ENVMAP ) && defined( RE_IndirectSpecular )\n\tvec3 radiance = getLightProbeIndirectRadiance( geometry, Material_BlinnShininessExponent( material ), 8 );\n\t#ifndef STANDARD\n\t\tvec3 clearCoatRadiance = getLightProbeIndirectRadiance( geometry, Material_ClearCoat_BlinnShininessExponent( material ), 8 );\n\t#else\n\t\tvec3 clearCoatRadiance = vec3( 0.0 );\n\t#endif\n\t\t\n\tRE_IndirectSpecular( radiance, clearCoatRadiance, geometry, material, reflectedLight );\n#endif\n";
 
 	var logdepthbuf_fragment = "#if defined(USE_LOGDEPTHBUF) && defined(USE_LOGDEPTHBUF_EXT)\n\tgl_FragDepthEXT = log2(vFragDepth) * logDepthBufFC * 0.5;\n#endif";
 
@@ -5023,7 +5096,7 @@
 
 	var normalmap_pars_fragment = "#ifdef USE_NORMALMAP\n\tuniform sampler2D normalMap;\n\tuniform vec2 normalScale;\n\tvec3 perturbNormal2Arb( vec3 eye_pos, vec3 surf_norm ) {\n\t\tvec3 q0 = dFdx( eye_pos.xyz );\n\t\tvec3 q1 = dFdy( eye_pos.xyz );\n\t\tvec2 st0 = dFdx( vUv.st );\n\t\tvec2 st1 = dFdy( vUv.st );\n\t\tvec3 S = normalize( q0 * st1.t - q1 * st0.t );\n\t\tvec3 T = normalize( -q0 * st1.s + q1 * st0.s );\n\t\tvec3 N = normalize( surf_norm );\n\t\tvec3 mapN = texture2D( normalMap, vUv ).xyz * 2.0 - 1.0;\n\t\tmapN.xy = normalScale * mapN.xy;\n\t\tmat3 tsn = mat3( S, T, N );\n\t\treturn normalize( tsn * mapN );\n\t}\n#endif\n";
 
-	var packing = "vec3 packNormalToRGB( const in vec3 normal ) {\n\treturn normalize( normal ) * 0.5 + 0.5;\n}\nvec3 unpackRGBToNormal( const in vec3 rgb ) {\n\treturn 1.0 - 2.0 * rgb.xyz;\n}\nconst float PackUpscale = 256. / 255.;const float UnpackDownscale = 255. / 256.;\nconst vec3 PackFactors = vec3( 256. * 256. * 256., 256. * 256.,  256. );\nconst vec4 UnpackFactors = UnpackDownscale / vec4( PackFactors, 1. );\nconst float ShiftRight8 = 1. / 256.;\nvec4 packDepthToRGBA( const in float v ) {\n\tvec4 r = vec4( fract( v * PackFactors ), v );\n\tr.yzw -= r.xyz * ShiftRight8;\treturn r * PackUpscale;\n}\nfloat unpackRGBAToDepth( const in vec4 v ) {\n\treturn dot( v, UnpackFactors );\n}\nfloat viewZToOrthographicDepth( const in float viewZ, const in float near, const in float far ) {\n\treturn ( viewZ + near ) / ( near - far );\n}\nfloat orthographicDepthToViewZ( const in float linearClipZ, const in float near, const in float far ) {\n\treturn linearClipZ * ( near - far ) - near;\n}\nfloat viewZToPerspectiveDepth( const in float viewZ, const in float near, const in float far ) {\n\treturn (( near + viewZ ) * far ) / (( far - near ) * viewZ );\n}\nfloat perspectiveDepthToViewZ( const in float invClipZ, const in float near, const in float far ) {\n\treturn ( near * far ) / ( ( far - near ) * invClipZ - far );\n}\n";
+	var packing = "vec3 packNormalToRGB( const in vec3 normal ) {\n  return normalize( normal ) * 0.5 + 0.5;\n}\nvec3 unpackRGBToNormal( const in vec3 rgb ) {\n  return 1.0 - 2.0 * rgb.xyz;\n}\nconst float PackUpscale = 256. / 255.;const float UnpackDownscale = 255. / 256.;\nconst vec3 PackFactors = vec3( 256. * 256. * 256., 256. * 256.,  256. );\nconst vec4 UnpackFactors = UnpackDownscale / vec4( PackFactors, 1. );\nconst float ShiftRight8 = 1. / 256.;\nvec4 packDepthToRGBA( const in float v ) {\n\tvec4 r = vec4( fract( v * PackFactors ), v );\n\tr.yzw -= r.xyz * ShiftRight8;\treturn r * PackUpscale;\n}\nfloat unpackRGBAToDepth( const in vec4 v ) {\n\treturn dot( v, UnpackFactors );\n}\nfloat viewZToOrthographicDepth( const in float viewZ, const in float near, const in float far ) {\n  return ( viewZ + near ) / ( near - far );\n}\nfloat orthographicDepthToViewZ( const in float linearClipZ, const in float near, const in float far ) {\n  return linearClipZ * ( near - far ) - near;\n}\nfloat viewZToPerspectiveDepth( const in float viewZ, const in float near, const in float far ) {\n  return (( near + viewZ ) * far ) / (( far - near ) * viewZ );\n}\nfloat perspectiveDepthToViewZ( const in float invClipZ, const in float near, const in float far ) {\n  return ( near * far ) / ( ( far - near ) * invClipZ - far );\n}\n";
 
 	var premultiplied_alpha_fragment = "#ifdef PREMULTIPLIED_ALPHA\n\tgl_FragColor.rgb *= gl_FragColor.a;\n#endif\n";
 
@@ -5033,13 +5106,13 @@
 
 	var roughnessmap_pars_fragment = "#ifdef USE_ROUGHNESSMAP\n\tuniform sampler2D roughnessMap;\n#endif";
 
-	var shadowmap_pars_fragment = "#ifdef USE_SHADOWMAP\n\t#if NUM_DIR_LIGHTS > 0\n\t\tuniform sampler2D directionalShadowMap[ NUM_DIR_LIGHTS ];\n\t\tvarying vec4 vDirectionalShadowCoord[ NUM_DIR_LIGHTS ];\n\t#endif\n\t#if NUM_SPOT_LIGHTS > 0\n\t\tuniform sampler2D spotShadowMap[ NUM_SPOT_LIGHTS ];\n\t\tvarying vec4 vSpotShadowCoord[ NUM_SPOT_LIGHTS ];\n\t#endif\n\t#if NUM_POINT_LIGHTS > 0\n\t\tuniform sampler2D pointShadowMap[ NUM_POINT_LIGHTS ];\n\t\tvarying vec4 vPointShadowCoord[ NUM_POINT_LIGHTS ];\n\t#endif\n\tfloat texture2DCompare( sampler2D depths, vec2 uv, float compare ) {\n\t\treturn step( compare, unpackRGBAToDepth( texture2D( depths, uv ) ) );\n\t}\n\tfloat texture2DShadowLerp( sampler2D depths, vec2 size, vec2 uv, float compare ) {\n\t\tconst vec2 offset = vec2( 0.0, 1.0 );\n\t\tvec2 texelSize = vec2( 1.0 ) / size;\n\t\tvec2 centroidUV = floor( uv * size + 0.5 ) / size;\n\t\tfloat lb = texture2DCompare( depths, centroidUV + texelSize * offset.xx, compare );\n\t\tfloat lt = texture2DCompare( depths, centroidUV + texelSize * offset.xy, compare );\n\t\tfloat rb = texture2DCompare( depths, centroidUV + texelSize * offset.yx, compare );\n\t\tfloat rt = texture2DCompare( depths, centroidUV + texelSize * offset.yy, compare );\n\t\tvec2 f = fract( uv * size + 0.5 );\n\t\tfloat a = mix( lb, lt, f.y );\n\t\tfloat b = mix( rb, rt, f.y );\n\t\tfloat c = mix( a, b, f.x );\n\t\treturn c;\n\t}\n\tfloat getShadow( sampler2D shadowMap, vec2 shadowMapSize, float shadowBias, float shadowRadius, vec4 shadowCoord ) {\n\t\tshadowCoord.xyz /= shadowCoord.w;\n\t\tshadowCoord.z += shadowBias;\n\t\tbvec4 inFrustumVec = bvec4 ( shadowCoord.x >= 0.0, shadowCoord.x <= 1.0, shadowCoord.y >= 0.0, shadowCoord.y <= 1.0 );\n\t\tbool inFrustum = all( inFrustumVec );\n\t\tbvec2 frustumTestVec = bvec2( inFrustum, shadowCoord.z <= 1.0 );\n\t\tbool frustumTest = all( frustumTestVec );\n\t\tif ( frustumTest ) {\n\t\t#if defined( SHADOWMAP_TYPE_PCF )\n\t\t\tvec2 texelSize = vec2( 1.0 ) / shadowMapSize;\n\t\t\tfloat dx0 = - texelSize.x * shadowRadius;\n\t\t\tfloat dy0 = - texelSize.y * shadowRadius;\n\t\t\tfloat dx1 = + texelSize.x * shadowRadius;\n\t\t\tfloat dy1 = + texelSize.y * shadowRadius;\n\t\t\treturn (\n\t\t\t\ttexture2DCompare( shadowMap, shadowCoord.xy + vec2( dx0, dy0 ), shadowCoord.z ) +\n\t\t\t\ttexture2DCompare( shadowMap, shadowCoord.xy + vec2( 0.0, dy0 ), shadowCoord.z ) +\n\t\t\t\ttexture2DCompare( shadowMap, shadowCoord.xy + vec2( dx1, dy0 ), shadowCoord.z ) +\n\t\t\t\ttexture2DCompare( shadowMap, shadowCoord.xy + vec2( dx0, 0.0 ), shadowCoord.z ) +\n\t\t\t\ttexture2DCompare( shadowMap, shadowCoord.xy, shadowCoord.z ) +\n\t\t\t\ttexture2DCompare( shadowMap, shadowCoord.xy + vec2( dx1, 0.0 ), shadowCoord.z ) +\n\t\t\t\ttexture2DCompare( shadowMap, shadowCoord.xy + vec2( dx0, dy1 ), shadowCoord.z ) +\n\t\t\t\ttexture2DCompare( shadowMap, shadowCoord.xy + vec2( 0.0, dy1 ), shadowCoord.z ) +\n\t\t\t\ttexture2DCompare( shadowMap, shadowCoord.xy + vec2( dx1, dy1 ), shadowCoord.z )\n\t\t\t) * ( 1.0 / 9.0 );\n\t\t#elif defined( SHADOWMAP_TYPE_PCF_SOFT )\n\t\t\tvec2 texelSize = vec2( 1.0 ) / shadowMapSize;\n\t\t\tfloat dx0 = - texelSize.x * shadowRadius;\n\t\t\tfloat dy0 = - texelSize.y * shadowRadius;\n\t\t\tfloat dx1 = + texelSize.x * shadowRadius;\n\t\t\tfloat dy1 = + texelSize.y * shadowRadius;\n\t\t\treturn (\n\t\t\t\ttexture2DShadowLerp( shadowMap, shadowMapSize, shadowCoord.xy + vec2( dx0, dy0 ), shadowCoord.z ) +\n\t\t\t\ttexture2DShadowLerp( shadowMap, shadowMapSize, shadowCoord.xy + vec2( 0.0, dy0 ), shadowCoord.z ) +\n\t\t\t\ttexture2DShadowLerp( shadowMap, shadowMapSize, shadowCoord.xy + vec2( dx1, dy0 ), shadowCoord.z ) +\n\t\t\t\ttexture2DShadowLerp( shadowMap, shadowMapSize, shadowCoord.xy + vec2( dx0, 0.0 ), shadowCoord.z ) +\n\t\t\t\ttexture2DShadowLerp( shadowMap, shadowMapSize, shadowCoord.xy, shadowCoord.z ) +\n\t\t\t\ttexture2DShadowLerp( shadowMap, shadowMapSize, shadowCoord.xy + vec2( dx1, 0.0 ), shadowCoord.z ) +\n\t\t\t\ttexture2DShadowLerp( shadowMap, shadowMapSize, shadowCoord.xy + vec2( dx0, dy1 ), shadowCoord.z ) +\n\t\t\t\ttexture2DShadowLerp( shadowMap, shadowMapSize, shadowCoord.xy + vec2( 0.0, dy1 ), shadowCoord.z ) +\n\t\t\t\ttexture2DShadowLerp( shadowMap, shadowMapSize, shadowCoord.xy + vec2( dx1, dy1 ), shadowCoord.z )\n\t\t\t) * ( 1.0 / 9.0 );\n\t\t#else\n\t\t\treturn texture2DCompare( shadowMap, shadowCoord.xy, shadowCoord.z );\n\t\t#endif\n\t\t}\n\t\treturn 1.0;\n\t}\n\tvec2 cubeToUV( vec3 v, float texelSizeY ) {\n\t\tvec3 absV = abs( v );\n\t\tfloat scaleToCube = 1.0 / max( absV.x, max( absV.y, absV.z ) );\n\t\tabsV *= scaleToCube;\n\t\tv *= scaleToCube * ( 1.0 - 2.0 * texelSizeY );\n\t\tvec2 planar = v.xy;\n\t\tfloat almostATexel = 1.5 * texelSizeY;\n\t\tfloat almostOne = 1.0 - almostATexel;\n\t\tif ( absV.z >= almostOne ) {\n\t\t\tif ( v.z > 0.0 )\n\t\t\t\tplanar.x = 4.0 - v.x;\n\t\t} else if ( absV.x >= almostOne ) {\n\t\t\tfloat signX = sign( v.x );\n\t\t\tplanar.x = v.z * signX + 2.0 * signX;\n\t\t} else if ( absV.y >= almostOne ) {\n\t\t\tfloat signY = sign( v.y );\n\t\t\tplanar.x = v.x + 2.0 * signY + 2.0;\n\t\t\tplanar.y = v.z * signY - 2.0;\n\t\t}\n\t\treturn vec2( 0.125, 0.25 ) * planar + vec2( 0.375, 0.75 );\n\t}\n\tfloat getPointShadow( sampler2D shadowMap, vec2 shadowMapSize, float shadowBias, float shadowRadius, vec4 shadowCoord ) {\n\t\tvec2 texelSize = vec2( 1.0 ) / ( shadowMapSize * vec2( 4.0, 2.0 ) );\n\t\tvec3 lightToPosition = shadowCoord.xyz;\n\t\tvec3 bd3D = normalize( lightToPosition );\n\t\tfloat dp = ( length( lightToPosition ) - shadowBias ) / 1000.0;\n\t\t#if defined( SHADOWMAP_TYPE_PCF ) || defined( SHADOWMAP_TYPE_PCF_SOFT )\n\t\t\tvec2 offset = vec2( - 1, 1 ) * shadowRadius * texelSize.y;\n\t\t\treturn (\n\t\t\t\ttexture2DCompare( shadowMap, cubeToUV( bd3D + offset.xyy, texelSize.y ), dp ) +\n\t\t\t\ttexture2DCompare( shadowMap, cubeToUV( bd3D + offset.yyy, texelSize.y ), dp ) +\n\t\t\t\ttexture2DCompare( shadowMap, cubeToUV( bd3D + offset.xyx, texelSize.y ), dp ) +\n\t\t\t\ttexture2DCompare( shadowMap, cubeToUV( bd3D + offset.yyx, texelSize.y ), dp ) +\n\t\t\t\ttexture2DCompare( shadowMap, cubeToUV( bd3D, texelSize.y ), dp ) +\n\t\t\t\ttexture2DCompare( shadowMap, cubeToUV( bd3D + offset.xxy, texelSize.y ), dp ) +\n\t\t\t\ttexture2DCompare( shadowMap, cubeToUV( bd3D + offset.yxy, texelSize.y ), dp ) +\n\t\t\t\ttexture2DCompare( shadowMap, cubeToUV( bd3D + offset.xxx, texelSize.y ), dp ) +\n\t\t\t\ttexture2DCompare( shadowMap, cubeToUV( bd3D + offset.yxx, texelSize.y ), dp )\n\t\t\t) * ( 1.0 / 9.0 );\n\t\t#else\n\t\t\treturn texture2DCompare( shadowMap, cubeToUV( bd3D, texelSize.y ), dp );\n\t\t#endif\n\t}\n#endif\n";
+	var shadowmap_pars_fragment = "#ifdef USE_SHADOWMAP\n\t#if NUM_DIR_LIGHTS > 0\n\t\tuniform sampler2D directionalShadowMap[ NUM_DIR_LIGHTS ];\n\t\tvarying vec4 vDirectionalShadowCoord[ NUM_DIR_LIGHTS ];\n\t#endif\n\t#if NUM_SPOT_LIGHTS > 0\n\t\tuniform sampler2D spotShadowMap[ NUM_SPOT_LIGHTS ];\n\t\tvarying vec4 vSpotShadowCoord[ NUM_SPOT_LIGHTS ];\n\t#endif\n\t#if NUM_POINT_LIGHTS > 0\n\t\tuniform sampler2D pointShadowMap[ NUM_POINT_LIGHTS ];\n\t\tvarying vec4 vPointShadowCoord[ NUM_POINT_LIGHTS ];\n\t#endif\n    #if NUM_RECT_AREA_LIGHTS > 0\n    #endif\n\tfloat texture2DCompare( sampler2D depths, vec2 uv, float compare ) {\n\t\treturn step( compare, unpackRGBAToDepth( texture2D( depths, uv ) ) );\n\t}\n\tfloat texture2DShadowLerp( sampler2D depths, vec2 size, vec2 uv, float compare ) {\n\t\tconst vec2 offset = vec2( 0.0, 1.0 );\n\t\tvec2 texelSize = vec2( 1.0 ) / size;\n\t\tvec2 centroidUV = floor( uv * size + 0.5 ) / size;\n\t\tfloat lb = texture2DCompare( depths, centroidUV + texelSize * offset.xx, compare );\n\t\tfloat lt = texture2DCompare( depths, centroidUV + texelSize * offset.xy, compare );\n\t\tfloat rb = texture2DCompare( depths, centroidUV + texelSize * offset.yx, compare );\n\t\tfloat rt = texture2DCompare( depths, centroidUV + texelSize * offset.yy, compare );\n\t\tvec2 f = fract( uv * size + 0.5 );\n\t\tfloat a = mix( lb, lt, f.y );\n\t\tfloat b = mix( rb, rt, f.y );\n\t\tfloat c = mix( a, b, f.x );\n\t\treturn c;\n\t}\n\tfloat getShadow( sampler2D shadowMap, vec2 shadowMapSize, float shadowBias, float shadowRadius, vec4 shadowCoord ) {\n\t\tshadowCoord.xyz /= shadowCoord.w;\n\t\tshadowCoord.z += shadowBias;\n\t\tbvec4 inFrustumVec = bvec4 ( shadowCoord.x >= 0.0, shadowCoord.x <= 1.0, shadowCoord.y >= 0.0, shadowCoord.y <= 1.0 );\n\t\tbool inFrustum = all( inFrustumVec );\n\t\tbvec2 frustumTestVec = bvec2( inFrustum, shadowCoord.z <= 1.0 );\n\t\tbool frustumTest = all( frustumTestVec );\n\t\tif ( frustumTest ) {\n\t\t#if defined( SHADOWMAP_TYPE_PCF )\n\t\t\tvec2 texelSize = vec2( 1.0 ) / shadowMapSize;\n\t\t\tfloat dx0 = - texelSize.x * shadowRadius;\n\t\t\tfloat dy0 = - texelSize.y * shadowRadius;\n\t\t\tfloat dx1 = + texelSize.x * shadowRadius;\n\t\t\tfloat dy1 = + texelSize.y * shadowRadius;\n\t\t\treturn (\n\t\t\t\ttexture2DCompare( shadowMap, shadowCoord.xy + vec2( dx0, dy0 ), shadowCoord.z ) +\n\t\t\t\ttexture2DCompare( shadowMap, shadowCoord.xy + vec2( 0.0, dy0 ), shadowCoord.z ) +\n\t\t\t\ttexture2DCompare( shadowMap, shadowCoord.xy + vec2( dx1, dy0 ), shadowCoord.z ) +\n\t\t\t\ttexture2DCompare( shadowMap, shadowCoord.xy + vec2( dx0, 0.0 ), shadowCoord.z ) +\n\t\t\t\ttexture2DCompare( shadowMap, shadowCoord.xy, shadowCoord.z ) +\n\t\t\t\ttexture2DCompare( shadowMap, shadowCoord.xy + vec2( dx1, 0.0 ), shadowCoord.z ) +\n\t\t\t\ttexture2DCompare( shadowMap, shadowCoord.xy + vec2( dx0, dy1 ), shadowCoord.z ) +\n\t\t\t\ttexture2DCompare( shadowMap, shadowCoord.xy + vec2( 0.0, dy1 ), shadowCoord.z ) +\n\t\t\t\ttexture2DCompare( shadowMap, shadowCoord.xy + vec2( dx1, dy1 ), shadowCoord.z )\n\t\t\t) * ( 1.0 / 9.0 );\n\t\t#elif defined( SHADOWMAP_TYPE_PCF_SOFT )\n\t\t\tvec2 texelSize = vec2( 1.0 ) / shadowMapSize;\n\t\t\tfloat dx0 = - texelSize.x * shadowRadius;\n\t\t\tfloat dy0 = - texelSize.y * shadowRadius;\n\t\t\tfloat dx1 = + texelSize.x * shadowRadius;\n\t\t\tfloat dy1 = + texelSize.y * shadowRadius;\n\t\t\treturn (\n\t\t\t\ttexture2DShadowLerp( shadowMap, shadowMapSize, shadowCoord.xy + vec2( dx0, dy0 ), shadowCoord.z ) +\n\t\t\t\ttexture2DShadowLerp( shadowMap, shadowMapSize, shadowCoord.xy + vec2( 0.0, dy0 ), shadowCoord.z ) +\n\t\t\t\ttexture2DShadowLerp( shadowMap, shadowMapSize, shadowCoord.xy + vec2( dx1, dy0 ), shadowCoord.z ) +\n\t\t\t\ttexture2DShadowLerp( shadowMap, shadowMapSize, shadowCoord.xy + vec2( dx0, 0.0 ), shadowCoord.z ) +\n\t\t\t\ttexture2DShadowLerp( shadowMap, shadowMapSize, shadowCoord.xy, shadowCoord.z ) +\n\t\t\t\ttexture2DShadowLerp( shadowMap, shadowMapSize, shadowCoord.xy + vec2( dx1, 0.0 ), shadowCoord.z ) +\n\t\t\t\ttexture2DShadowLerp( shadowMap, shadowMapSize, shadowCoord.xy + vec2( dx0, dy1 ), shadowCoord.z ) +\n\t\t\t\ttexture2DShadowLerp( shadowMap, shadowMapSize, shadowCoord.xy + vec2( 0.0, dy1 ), shadowCoord.z ) +\n\t\t\t\ttexture2DShadowLerp( shadowMap, shadowMapSize, shadowCoord.xy + vec2( dx1, dy1 ), shadowCoord.z )\n\t\t\t) * ( 1.0 / 9.0 );\n\t\t#else\n\t\t\treturn texture2DCompare( shadowMap, shadowCoord.xy, shadowCoord.z );\n\t\t#endif\n\t\t}\n\t\treturn 1.0;\n\t}\n\tvec2 cubeToUV( vec3 v, float texelSizeY ) {\n\t\tvec3 absV = abs( v );\n\t\tfloat scaleToCube = 1.0 / max( absV.x, max( absV.y, absV.z ) );\n\t\tabsV *= scaleToCube;\n\t\tv *= scaleToCube * ( 1.0 - 2.0 * texelSizeY );\n\t\tvec2 planar = v.xy;\n\t\tfloat almostATexel = 1.5 * texelSizeY;\n\t\tfloat almostOne = 1.0 - almostATexel;\n\t\tif ( absV.z >= almostOne ) {\n\t\t\tif ( v.z > 0.0 )\n\t\t\t\tplanar.x = 4.0 - v.x;\n\t\t} else if ( absV.x >= almostOne ) {\n\t\t\tfloat signX = sign( v.x );\n\t\t\tplanar.x = v.z * signX + 2.0 * signX;\n\t\t} else if ( absV.y >= almostOne ) {\n\t\t\tfloat signY = sign( v.y );\n\t\t\tplanar.x = v.x + 2.0 * signY + 2.0;\n\t\t\tplanar.y = v.z * signY - 2.0;\n\t\t}\n\t\treturn vec2( 0.125, 0.25 ) * planar + vec2( 0.375, 0.75 );\n\t}\n\tfloat getPointShadow( sampler2D shadowMap, vec2 shadowMapSize, float shadowBias, float shadowRadius, vec4 shadowCoord ) {\n\t\tvec2 texelSize = vec2( 1.0 ) / ( shadowMapSize * vec2( 4.0, 2.0 ) );\n\t\tvec3 lightToPosition = shadowCoord.xyz;\n\t\tvec3 bd3D = normalize( lightToPosition );\n\t\tfloat dp = ( length( lightToPosition ) - shadowBias ) / 1000.0;\n\t\t#if defined( SHADOWMAP_TYPE_PCF ) || defined( SHADOWMAP_TYPE_PCF_SOFT )\n\t\t\tvec2 offset = vec2( - 1, 1 ) * shadowRadius * texelSize.y;\n\t\t\treturn (\n\t\t\t\ttexture2DCompare( shadowMap, cubeToUV( bd3D + offset.xyy, texelSize.y ), dp ) +\n\t\t\t\ttexture2DCompare( shadowMap, cubeToUV( bd3D + offset.yyy, texelSize.y ), dp ) +\n\t\t\t\ttexture2DCompare( shadowMap, cubeToUV( bd3D + offset.xyx, texelSize.y ), dp ) +\n\t\t\t\ttexture2DCompare( shadowMap, cubeToUV( bd3D + offset.yyx, texelSize.y ), dp ) +\n\t\t\t\ttexture2DCompare( shadowMap, cubeToUV( bd3D, texelSize.y ), dp ) +\n\t\t\t\ttexture2DCompare( shadowMap, cubeToUV( bd3D + offset.xxy, texelSize.y ), dp ) +\n\t\t\t\ttexture2DCompare( shadowMap, cubeToUV( bd3D + offset.yxy, texelSize.y ), dp ) +\n\t\t\t\ttexture2DCompare( shadowMap, cubeToUV( bd3D + offset.xxx, texelSize.y ), dp ) +\n\t\t\t\ttexture2DCompare( shadowMap, cubeToUV( bd3D + offset.yxx, texelSize.y ), dp )\n\t\t\t) * ( 1.0 / 9.0 );\n\t\t#else\n\t\t\treturn texture2DCompare( shadowMap, cubeToUV( bd3D, texelSize.y ), dp );\n\t\t#endif\n\t}\n#endif\n";
 
-	var shadowmap_pars_vertex = "#ifdef USE_SHADOWMAP\n\t#if NUM_DIR_LIGHTS > 0\n\t\tuniform mat4 directionalShadowMatrix[ NUM_DIR_LIGHTS ];\n\t\tvarying vec4 vDirectionalShadowCoord[ NUM_DIR_LIGHTS ];\n\t#endif\n\t#if NUM_SPOT_LIGHTS > 0\n\t\tuniform mat4 spotShadowMatrix[ NUM_SPOT_LIGHTS ];\n\t\tvarying vec4 vSpotShadowCoord[ NUM_SPOT_LIGHTS ];\n\t#endif\n\t#if NUM_POINT_LIGHTS > 0\n\t\tuniform mat4 pointShadowMatrix[ NUM_POINT_LIGHTS ];\n\t\tvarying vec4 vPointShadowCoord[ NUM_POINT_LIGHTS ];\n\t#endif\n#endif\n";
+	var shadowmap_pars_vertex = "#ifdef USE_SHADOWMAP\n\t#if NUM_DIR_LIGHTS > 0\n\t\tuniform mat4 directionalShadowMatrix[ NUM_DIR_LIGHTS ];\n\t\tvarying vec4 vDirectionalShadowCoord[ NUM_DIR_LIGHTS ];\n\t#endif\n\t#if NUM_SPOT_LIGHTS > 0\n\t\tuniform mat4 spotShadowMatrix[ NUM_SPOT_LIGHTS ];\n\t\tvarying vec4 vSpotShadowCoord[ NUM_SPOT_LIGHTS ];\n\t#endif\n\t#if NUM_POINT_LIGHTS > 0\n\t\tuniform mat4 pointShadowMatrix[ NUM_POINT_LIGHTS ];\n\t\tvarying vec4 vPointShadowCoord[ NUM_POINT_LIGHTS ];\n\t#endif\n    #if NUM_RECT_AREA_LIGHTS > 0\n    #endif\n#endif\n";
 
-	var shadowmap_vertex = "#ifdef USE_SHADOWMAP\n\t#if NUM_DIR_LIGHTS > 0\n\tfor ( int i = 0; i < NUM_DIR_LIGHTS; i ++ ) {\n\t\tvDirectionalShadowCoord[ i ] = directionalShadowMatrix[ i ] * worldPosition;\n\t}\n\t#endif\n\t#if NUM_SPOT_LIGHTS > 0\n\tfor ( int i = 0; i < NUM_SPOT_LIGHTS; i ++ ) {\n\t\tvSpotShadowCoord[ i ] = spotShadowMatrix[ i ] * worldPosition;\n\t}\n\t#endif\n\t#if NUM_POINT_LIGHTS > 0\n\tfor ( int i = 0; i < NUM_POINT_LIGHTS; i ++ ) {\n\t\tvPointShadowCoord[ i ] = pointShadowMatrix[ i ] * worldPosition;\n\t}\n\t#endif\n#endif\n";
+	var shadowmap_vertex = "#ifdef USE_SHADOWMAP\n\t#if NUM_DIR_LIGHTS > 0\n\tfor ( int i = 0; i < NUM_DIR_LIGHTS; i ++ ) {\n\t\tvDirectionalShadowCoord[ i ] = directionalShadowMatrix[ i ] * worldPosition;\n\t}\n\t#endif\n\t#if NUM_SPOT_LIGHTS > 0\n\tfor ( int i = 0; i < NUM_SPOT_LIGHTS; i ++ ) {\n\t\tvSpotShadowCoord[ i ] = spotShadowMatrix[ i ] * worldPosition;\n\t}\n\t#endif\n\t#if NUM_POINT_LIGHTS > 0\n\tfor ( int i = 0; i < NUM_POINT_LIGHTS; i ++ ) {\n\t\tvPointShadowCoord[ i ] = pointShadowMatrix[ i ] * worldPosition;\n\t}\n\t#endif\n    #if NUM_RECT_AREA_LIGHTS > 0\n    #endif\n#endif\n";
 
-	var shadowmask_pars_fragment = "float getShadowMask() {\n\tfloat shadow = 1.0;\n\t#ifdef USE_SHADOWMAP\n\t#if NUM_DIR_LIGHTS > 0\n\tDirectionalLight directionalLight;\n\tfor ( int i = 0; i < NUM_DIR_LIGHTS; i ++ ) {\n\t\tdirectionalLight = directionalLights[ i ];\n\t\tshadow *= bool( directionalLight.shadow ) ? getShadow( directionalShadowMap[ i ], directionalLight.shadowMapSize, directionalLight.shadowBias, directionalLight.shadowRadius, vDirectionalShadowCoord[ i ] ) : 1.0;\n\t}\n\t#endif\n\t#if NUM_SPOT_LIGHTS > 0\n\tSpotLight spotLight;\n\tfor ( int i = 0; i < NUM_SPOT_LIGHTS; i ++ ) {\n\t\tspotLight = spotLights[ i ];\n\t\tshadow *= bool( spotLight.shadow ) ? getShadow( spotShadowMap[ i ], spotLight.shadowMapSize, spotLight.shadowBias, spotLight.shadowRadius, vSpotShadowCoord[ i ] ) : 1.0;\n\t}\n\t#endif\n\t#if NUM_POINT_LIGHTS > 0\n\tPointLight pointLight;\n\tfor ( int i = 0; i < NUM_POINT_LIGHTS; i ++ ) {\n\t\tpointLight = pointLights[ i ];\n\t\tshadow *= bool( pointLight.shadow ) ? getPointShadow( pointShadowMap[ i ], pointLight.shadowMapSize, pointLight.shadowBias, pointLight.shadowRadius, vPointShadowCoord[ i ] ) : 1.0;\n\t}\n\t#endif\n\t#endif\n\treturn shadow;\n}\n";
+	var shadowmask_pars_fragment = "float getShadowMask() {\n\tfloat shadow = 1.0;\n\t#ifdef USE_SHADOWMAP\n\t#if NUM_DIR_LIGHTS > 0\n\tDirectionalLight directionalLight;\n\tfor ( int i = 0; i < NUM_DIR_LIGHTS; i ++ ) {\n\t\tdirectionalLight = directionalLights[ i ];\n\t\tshadow *= bool( directionalLight.shadow ) ? getShadow( directionalShadowMap[ i ], directionalLight.shadowMapSize, directionalLight.shadowBias, directionalLight.shadowRadius, vDirectionalShadowCoord[ i ] ) : 1.0;\n\t}\n\t#endif\n\t#if NUM_SPOT_LIGHTS > 0\n\tSpotLight spotLight;\n\tfor ( int i = 0; i < NUM_SPOT_LIGHTS; i ++ ) {\n\t\tspotLight = spotLights[ i ];\n\t\tshadow *= bool( spotLight.shadow ) ? getShadow( spotShadowMap[ i ], spotLight.shadowMapSize, spotLight.shadowBias, spotLight.shadowRadius, vSpotShadowCoord[ i ] ) : 1.0;\n\t}\n\t#endif\n\t#if NUM_POINT_LIGHTS > 0\n\tPointLight pointLight;\n\tfor ( int i = 0; i < NUM_POINT_LIGHTS; i ++ ) {\n\t\tpointLight = pointLights[ i ];\n\t\tshadow *= bool( pointLight.shadow ) ? getPointShadow( pointShadowMap[ i ], pointLight.shadowMapSize, pointLight.shadowBias, pointLight.shadowRadius, vPointShadowCoord[ i ] ) : 1.0;\n\t}\n\t#endif\n\t#if NUM_RECT_AREA_LIGHTS > 0\n\t#endif\n\t#endif\n\treturn shadow;\n}\n";
 
 	var skinbase_vertex = "#ifdef USE_SKINNING\n\tmat4 boneMatX = getBoneMatrix( skinIndex.x );\n\tmat4 boneMatY = getBoneMatrix( skinIndex.y );\n\tmat4 boneMatZ = getBoneMatrix( skinIndex.z );\n\tmat4 boneMatW = getBoneMatrix( skinIndex.w );\n#endif";
 
@@ -5055,7 +5128,7 @@
 
 	var tonemapping_fragment = "#if defined( TONE_MAPPING )\n  gl_FragColor.rgb = toneMapping( gl_FragColor.rgb );\n#endif\n";
 
-	var tonemapping_pars_fragment = "#define saturate(a) clamp( a, 0.0, 1.0 )\nuniform float toneMappingExposure;\nuniform float toneMappingWhitePoint;\nvec3 LinearToneMapping( vec3 color ) {\n\treturn toneMappingExposure * color;\n}\nvec3 ReinhardToneMapping( vec3 color ) {\n\tcolor *= toneMappingExposure;\n\treturn saturate( color / ( vec3( 1.0 ) + color ) );\n}\n#define Uncharted2Helper( x ) max( ( ( x * ( 0.15 * x + 0.10 * 0.50 ) + 0.20 * 0.02 ) / ( x * ( 0.15 * x + 0.50 ) + 0.20 * 0.30 ) ) - 0.02 / 0.30, vec3( 0.0 ) )\nvec3 Uncharted2ToneMapping( vec3 color ) {\n\tcolor *= toneMappingExposure;\n\treturn saturate( Uncharted2Helper( color ) / Uncharted2Helper( vec3( toneMappingWhitePoint ) ) );\n}\nvec3 OptimizedCineonToneMapping( vec3 color ) {\n\tcolor *= toneMappingExposure;\n\tcolor = max( vec3( 0.0 ), color - 0.004 );\n\treturn pow( ( color * ( 6.2 * color + 0.5 ) ) / ( color * ( 6.2 * color + 1.7 ) + 0.06 ), vec3( 2.2 ) );\n}\n";
+	var tonemapping_pars_fragment = "#define saturate(a) clamp( a, 0.0, 1.0 )\nuniform float toneMappingExposure;\nuniform float toneMappingWhitePoint;\nvec3 LinearToneMapping( vec3 color ) {\n  return toneMappingExposure * color;\n}\nvec3 ReinhardToneMapping( vec3 color ) {\n  color *= toneMappingExposure;\n  return saturate( color / ( vec3( 1.0 ) + color ) );\n}\n#define Uncharted2Helper( x ) max( ( ( x * ( 0.15 * x + 0.10 * 0.50 ) + 0.20 * 0.02 ) / ( x * ( 0.15 * x + 0.50 ) + 0.20 * 0.30 ) ) - 0.02 / 0.30, vec3( 0.0 ) )\nvec3 Uncharted2ToneMapping( vec3 color ) {\n  color *= toneMappingExposure;\n  return saturate( Uncharted2Helper( color ) / Uncharted2Helper( vec3( toneMappingWhitePoint ) ) );\n}\nvec3 OptimizedCineonToneMapping( vec3 color ) {\n  color *= toneMappingExposure;\n  color = max( vec3( 0.0 ), color - 0.004 );\n  return pow( ( color * ( 6.2 * color + 0.5 ) ) / ( color * ( 6.2 * color + 1.7 ) + 0.06 ), vec3( 2.2 ) );\n}\n";
 
 	var uv_pars_fragment = "#if defined( USE_MAP ) || defined( USE_BUMPMAP ) || defined( USE_NORMALMAP ) || defined( USE_SPECULARMAP ) || defined( USE_ALPHAMAP ) || defined( USE_EMISSIVEMAP ) || defined( USE_ROUGHNESSMAP ) || defined( USE_METALNESSMAP )\n\tvarying vec2 vUv;\n#endif";
 
@@ -5107,15 +5180,15 @@
 
 	var meshphysical_vert = "#define PHYSICAL\nvarying vec3 vViewPosition;\n#ifndef FLAT_SHADED\n\tvarying vec3 vNormal;\n#endif\n#include <common>\n#include <uv_pars_vertex>\n#include <uv2_pars_vertex>\n#include <displacementmap_pars_vertex>\n#include <color_pars_vertex>\n#include <morphtarget_pars_vertex>\n#include <skinning_pars_vertex>\n#include <shadowmap_pars_vertex>\n#include <specularmap_pars_fragment>\n#include <logdepthbuf_pars_vertex>\n#include <clipping_planes_pars_vertex>\nvoid main() {\n\t#include <uv_vertex>\n\t#include <uv2_vertex>\n\t#include <color_vertex>\n\t#include <beginnormal_vertex>\n\t#include <morphnormal_vertex>\n\t#include <skinbase_vertex>\n\t#include <skinnormal_vertex>\n\t#include <defaultnormal_vertex>\n#ifndef FLAT_SHADED\n\tvNormal = normalize( transformedNormal );\n#endif\n\t#include <begin_vertex>\n\t#include <displacementmap_vertex>\n\t#include <morphtarget_vertex>\n\t#include <skinning_vertex>\n\t#include <project_vertex>\n\t#include <logdepthbuf_vertex>\n\t#include <clipping_planes_vertex>\n\tvViewPosition = - mvPosition.xyz;\n\t#include <worldpos_vertex>\n\t#include <shadowmap_vertex>\n}\n";
 
-	var normal_frag = "#define NORMAL\nuniform float opacity;\n#if defined( FLAT_SHADED ) || defined( USE_BUMPMAP ) || defined( USE_NORMALMAP )\n\tvarying vec3 vViewPosition;\n#endif\n#ifndef FLAT_SHADED\n\tvarying vec3 vNormal;\n#endif\n#include <packing>\n#include <uv_pars_fragment>\n#include <bumpmap_pars_fragment>\n#include <normalmap_pars_fragment>\n#include <logdepthbuf_pars_fragment>\nvoid main() {\n\t#include <logdepthbuf_fragment>\n\t#include <normal_flip>\n\t#include <normal_fragment>\n\tgl_FragColor = vec4( packNormalToRGB( normal ), opacity );\n\t#include <premultiplied_alpha_fragment>\n\t#include <encodings_fragment>\n}\n";
+	var normal_frag = "#define NORMAL\nuniform float opacity;\n#if defined( FLAT_SHADED  ) || defined( USE_BUMPMAP ) || defined( USE_NORMALMAP )\n\tvarying vec3 vViewPosition;\n#endif\n#ifndef FLAT_SHADED\n\tvarying vec3 vNormal;\n#endif\n#include <packing>\n#include <uv_pars_fragment>\n#include <bumpmap_pars_fragment>\n#include <normalmap_pars_fragment>\n#include <logdepthbuf_pars_fragment>\nvoid main() {\n\t#include <logdepthbuf_fragment>\n\t#include <normal_flip>\n\t#include <normal_fragment>\n\tgl_FragColor = vec4( packNormalToRGB( normal ), opacity );\n\t#include <premultiplied_alpha_fragment>\n\t#include <encodings_fragment>\n}\n";
 
-	var normal_vert = "#define NORMAL\n#if defined( FLAT_SHADED ) || defined( USE_BUMPMAP ) || defined( USE_NORMALMAP )\n\tvarying vec3 vViewPosition;\n#endif\n#ifndef FLAT_SHADED\n\tvarying vec3 vNormal;\n#endif\n#include <uv_pars_vertex>\n#include <displacementmap_pars_vertex>\n#include <morphtarget_pars_vertex>\n#include <skinning_pars_vertex>\n#include <logdepthbuf_pars_vertex>\nvoid main() {\n\t#include <uv_vertex>\n\t#include <beginnormal_vertex>\n\t#include <morphnormal_vertex>\n\t#include <skinbase_vertex>\n\t#include <skinnormal_vertex>\n\t#include <defaultnormal_vertex>\n#ifndef FLAT_SHADED\n\tvNormal = normalize( transformedNormal );\n#endif\n\t#include <begin_vertex>\n\t#include <displacementmap_vertex>\n\t#include <morphtarget_vertex>\n\t#include <skinning_vertex>\n\t#include <project_vertex>\n\t#include <logdepthbuf_vertex>\n#if defined( FLAT_SHADED ) || defined( USE_BUMPMAP ) || defined( USE_NORMALMAP )\n\tvViewPosition = - mvPosition.xyz;\n#endif\n}\n";
+	var normal_vert = "#define NORMAL\n#if defined( FLAT_SHADED  ) || defined( USE_BUMPMAP ) || defined( USE_NORMALMAP )\n\tvarying vec3 vViewPosition;\n#endif\n#ifndef FLAT_SHADED\n\tvarying vec3 vNormal;\n#endif\n#include <uv_pars_vertex>\n#include <displacementmap_pars_vertex>\n#include <morphtarget_pars_vertex>\n#include <skinning_pars_vertex>\n#include <logdepthbuf_pars_vertex>\nvoid main() {\n\t#include <uv_vertex>\n\t#include <beginnormal_vertex>\n\t#include <morphnormal_vertex>\n\t#include <skinbase_vertex>\n\t#include <skinnormal_vertex>\n\t#include <defaultnormal_vertex>\n#ifndef FLAT_SHADED\n\tvNormal = normalize( transformedNormal );\n#endif\n\t#include <begin_vertex>\n\t#include <displacementmap_vertex>\n\t#include <morphtarget_vertex>\n\t#include <skinning_vertex>\n\t#include <project_vertex>\n\t#include <logdepthbuf_vertex>\n#if defined( FLAT_SHADED  ) || defined( USE_BUMPMAP ) || defined( USE_NORMALMAP )\n\tvViewPosition = - mvPosition.xyz;\n#endif\n}\n";
 
 	var points_frag = "uniform vec3 diffuse;\nuniform float opacity;\n#include <common>\n#include <packing>\n#include <color_pars_fragment>\n#include <map_particle_pars_fragment>\n#include <fog_pars_fragment>\n#include <shadowmap_pars_fragment>\n#include <logdepthbuf_pars_fragment>\n#include <clipping_planes_pars_fragment>\nvoid main() {\n\t#include <clipping_planes_fragment>\n\tvec3 outgoingLight = vec3( 0.0 );\n\tvec4 diffuseColor = vec4( diffuse, opacity );\n\t#include <logdepthbuf_fragment>\n\t#include <map_particle_fragment>\n\t#include <color_fragment>\n\t#include <alphatest_fragment>\n\toutgoingLight = diffuseColor.rgb;\n\tgl_FragColor = vec4( outgoingLight, diffuseColor.a );\n\t#include <premultiplied_alpha_fragment>\n\t#include <tonemapping_fragment>\n\t#include <encodings_fragment>\n\t#include <fog_fragment>\n}\n";
 
 	var points_vert = "uniform float size;\nuniform float scale;\n#include <common>\n#include <color_pars_vertex>\n#include <shadowmap_pars_vertex>\n#include <logdepthbuf_pars_vertex>\n#include <clipping_planes_pars_vertex>\nvoid main() {\n\t#include <color_vertex>\n\t#include <begin_vertex>\n\t#include <project_vertex>\n\t#ifdef USE_SIZEATTENUATION\n\t\tgl_PointSize = size * ( scale / - mvPosition.z );\n\t#else\n\t\tgl_PointSize = size;\n\t#endif\n\t#include <logdepthbuf_vertex>\n\t#include <clipping_planes_vertex>\n\t#include <worldpos_vertex>\n\t#include <shadowmap_vertex>\n}\n";
 
-	var shadow_frag = "uniform float opacity;\n#include <common>\n#include <packing>\n#include <bsdfs>\n#include <lights_pars>\n#include <shadowmap_pars_fragment>\n#include <shadowmask_pars_fragment>\nvoid main() {\n\tgl_FragColor = vec4( 0.0, 0.0, 0.0, opacity * ( 1.0 - getShadowMask() ) );\n}\n";
+	var shadow_frag = "uniform float opacity;\n#include <common>\n#include <packing>\n#include <bsdfs>\n#include <lights_pars>\n#include <shadowmap_pars_fragment>\n#include <shadowmask_pars_fragment>\nvoid main() {\n\tgl_FragColor = vec4( 0.0, 0.0, 0.0, opacity * ( 1.0  - getShadowMask() ) );\n}\n";
 
 	var shadow_vert = "#include <shadowmap_pars_vertex>\nvoid main() {\n\t#include <begin_vertex>\n\t#include <project_vertex>\n\t#include <worldpos_vertex>\n\t#include <shadowmap_vertex>\n}\n";
 
@@ -5923,13 +5996,13 @@
 				groundColor: {}
 			} },
 
-			// TODO (abelnation): RectAreaLight BRDF data needs to be moved from example to main src
-			rectAreaLights: { value: [], properties: {
-				color: {},
-				position: {},
-				width: {},
-				height: {}
-			} }
+	        // TODO (abelnation): RectAreaLight BRDF data needs to be moved from example to main src
+	        rectAreaLights: { value: [], properties: {
+	            color: {},
+	            position: {},
+	            width: {},
+	            height: {},
+	        } }
 
 		},
 
@@ -6616,7 +6689,7 @@
 				tempPosition.set( flare.matrixWorld.elements[ 12 ], flare.matrixWorld.elements[ 13 ], flare.matrixWorld.elements[ 14 ] );
 
 				tempPosition.applyMatrix4( camera.matrixWorldInverse );
-				tempPosition.applyMatrix4( camera.projectionMatrix );
+				tempPosition.applyProjection( camera.projectionMatrix );
 
 				// setup arrays for gl programs
 
@@ -7241,7 +7314,7 @@
 
 					currentValue.set( newValue );
 
-				} else if ( ( currentValue && currentValue.isVector3 ) && ( newValue && newValue.isVector3 ) ) {
+				} else if ( (currentValue && currentValue.isVector3) && (newValue && newValue.isVector3) ) {
 
 					currentValue.copy( newValue );
 
@@ -7848,7 +7921,7 @@
 
 								for ( i = 0, l = attribute.count; i < l; i ++ ) {
 
-									v1.fromBufferAttribute( attribute, i ).applyMatrix4( node.matrixWorld );
+									v1.fromAttribute( attribute, i ).applyMatrix4( node.matrixWorld );
 
 									scope.expandByPoint( v1 );
 
@@ -8427,6 +8500,30 @@
 			return this;
 
 		},
+
+		applyToVector3Array: function () {
+
+			var v1;
+
+			return function applyToVector3Array( array, offset, length ) {
+
+				if ( v1 === undefined ) v1 = new Vector3();
+				if ( offset === undefined ) offset = 0;
+				if ( length === undefined ) length = array.length;
+
+				for ( var i = 0, j = offset; i < length; i += 3, j += 3 ) {
+
+					v1.fromArray( array, j );
+					v1.applyMatrix3( this );
+					v1.toArray( array, j );
+
+				}
+
+				return array;
+
+			};
+
+		}(),
 
 		applyToBufferAttribute: function () {
 
@@ -10501,9 +10598,7 @@
 	Object3D.DefaultUp = new Vector3( 0, 1, 0 );
 	Object3D.DefaultMatrixAutoUpdate = true;
 
-	Object3D.prototype = {
-
-		constructor: Object3D,
+	Object.assign( Object3D.prototype, EventDispatcher.prototype, {
 
 		isObject3D: true,
 
@@ -11130,9 +11225,7 @@
 
 		}
 
-	};
-
-	Object.assign( Object3D.prototype, EventDispatcher.prototype );
+	} );
 
 	/**
 	 * @author bhouston / http://clara.io
@@ -12384,9 +12477,6 @@
 	 * @author bhouston / http://clara.io
 	 */
 
-	var count = 0;
-	function GeometryIdCount() { return count++; }
-
 	function Geometry() {
 
 		Object.defineProperty( this, 'id', { value: GeometryIdCount() } );
@@ -12399,7 +12489,7 @@
 		this.vertices = [];
 		this.colors = [];
 		this.faces = [];
-		this.faceVertexUvs = [[]];
+		this.faceVertexUvs = [ [] ];
 
 		this.morphTargets = [];
 		this.morphNormals = [];
@@ -12424,9 +12514,7 @@
 
 	}
 
-	Geometry.prototype = {
-
-		constructor: Geometry,
+	Object.assign( Geometry.prototype, EventDispatcher.prototype, {
 
 		isGeometry: true,
 
@@ -12678,7 +12766,7 @@
 
 						for ( var j = start, jl = start + count; j < jl; j += 3 ) {
 
-							addFace( indices[ j ], indices[ j + 1 ], indices[ j + 2 ], group.materialIndex );
+							addFace( indices[ j ], indices[ j + 1 ], indices[ j + 2 ], group.materialIndex  );
 
 						}
 
@@ -13071,7 +13159,7 @@
 
 		merge: function ( geometry, matrix, materialIndexOffset ) {
 
-			if ( ( geometry && geometry.isGeometry ) === false ) {
+			if ( (geometry && geometry.isGeometry) === false ) {
 
 				console.error( 'THREE.Geometry.merge(): geometry not an instance of THREE.Geometry.', geometry );
 				return;
@@ -13191,7 +13279,7 @@
 
 		mergeMesh: function ( mesh ) {
 
-			if ( ( mesh && mesh.isMesh ) === false ) {
+			if ( (mesh && mesh.isMesh) === false ) {
 
 				console.error( 'THREE.Geometry.mergeMesh(): mesh not an instance of THREE.Mesh.', mesh );
 				return;
@@ -13256,12 +13344,15 @@
 
 				indices = [ face.a, face.b, face.c ];
 
+				var dupIndex = - 1;
+
 				// if any duplicate vertices are found in a Face3
 				// we have to remove the face as nothing can be saved
 				for ( var n = 0; n < 3; n ++ ) {
 
 					if ( indices[ n ] === indices[ ( n + 1 ) % 3 ] ) {
 
+						dupIndex = n;
 						faceIndicesToRemove.push( i );
 						break;
 
@@ -13632,9 +13723,10 @@
 
 		}
 
-	};
+	} );
 
-	Object.assign( Geometry.prototype, EventDispatcher.prototype );
+	var count = 0;
+	function GeometryIdCount() { return count++; }
 
 	/**
 	 * @author alteredq / http://alteredqualia.com/
@@ -13664,9 +13756,7 @@
 
 	}
 
-	BufferGeometry.prototype = {
-
-		constructor: BufferGeometry,
+	Object.assign( BufferGeometry.prototype, EventDispatcher.prototype, {
 
 		isBufferGeometry: true,
 
@@ -13754,7 +13844,7 @@
 
 			if ( position !== undefined ) {
 
-				matrix.applyToBufferAttribute( position );
+				matrix.applyToVector3Array( position.array );
 				position.needsUpdate = true;
 
 			}
@@ -13765,7 +13855,7 @@
 
 				var normalMatrix = new Matrix3().getNormalMatrix( matrix );
 
-				normalMatrix.applyToBufferAttribute( normal );
+				normalMatrix.applyToVector3Array( normal.array );
 				normal.needsUpdate = true;
 
 			}
@@ -14625,23 +14715,6 @@
 
 		copy: function ( source ) {
 
-			var name, i, l;
-
-			// reset
-
-			this.index = null;
-			this.attributes = {};
-			this.morphAttributes = {};
-			this.groups = [];
-			this.boundingBox = null;
-			this.boundingSphere = null;
-
-			// name
-
-			this.name = source.name;
-
-			// index
-
 			var index = source.index;
 
 			if ( index !== null ) {
@@ -14650,71 +14723,23 @@
 
 			}
 
-			// attributes
-
 			var attributes = source.attributes;
 
-			for ( name in attributes ) {
+			for ( var name in attributes ) {
 
 				var attribute = attributes[ name ];
 				this.addAttribute( name, attribute.clone() );
 
 			}
 
-			// morph attributes
-
-			var morphAttributes = source.morphAttributes;
-
-			for ( name in morphAttributes ) {
-
-				var array = [];
-				var morphAttribute = morphAttributes[ name ]; // morphAttribute: array of Float32BufferAttributes
-
-				for ( i = 0, l = morphAttribute.length; i < l; i ++ ) {
-
-					array.push( morphAttribute[ i ].clone() );
-
-				}
-
-				this.morphAttributes[ name ] = array;
-
-			}
-
-			// groups
-
 			var groups = source.groups;
 
-			for ( i = 0, l = groups.length; i < l; i ++ ) {
+			for ( var i = 0, l = groups.length; i < l; i ++ ) {
 
 				var group = groups[ i ];
 				this.addGroup( group.start, group.count, group.materialIndex );
 
 			}
-
-			// bounding box
-
-			var boundingBox = source.boundingBox;
-
-			if ( boundingBox !== null ) {
-
-				this.boundingBox = boundingBox.clone();
-
-			}
-
-			// bounding sphere
-
-			var boundingSphere = source.boundingSphere;
-
-			if ( boundingSphere !== null ) {
-
-				this.boundingSphere = boundingSphere.clone();
-
-			}
-
-			// draw range
-
-			this.drawRange.start = source.drawRange.start;
-			this.drawRange.count = source.drawRange.count;
 
 			return this;
 
@@ -14726,11 +14751,9 @@
 
 		}
 
-	};
+	} );
 
 	BufferGeometry.MaxIndex = 65535;
-
-	Object.assign( BufferGeometry.prototype, EventDispatcher.prototype );
 
 	/**
 	 * @author mrdoob / http://mrdoob.com/
@@ -14865,23 +14888,23 @@
 
 			}
 
-			function checkBufferGeometryIntersection( object, raycaster, ray, position, uv, a, b, c ) {
+			function checkBufferGeometryIntersection( object, raycaster, ray, positions, uvs, a, b, c ) {
 
-				vA.fromBufferAttribute( position, a );
-				vB.fromBufferAttribute( position, b );
-				vC.fromBufferAttribute( position, c );
+				vA.fromArray( positions, a * 3 );
+				vB.fromArray( positions, b * 3 );
+				vC.fromArray( positions, c * 3 );
 
 				var intersection = checkIntersection( object, raycaster, ray, vA, vB, vC, intersectionPoint );
 
 				if ( intersection ) {
 
-					if ( uv ) {
+					if ( uvs ) {
 
-						uvA.fromBufferAttribute( uv, a );
-						uvB.fromBufferAttribute( uv, b );
-						uvC.fromBufferAttribute( uv, c );
+						uvA.fromArray( uvs, a * 2 );
+						uvB.fromArray( uvs, b * 2 );
+						uvC.fromArray( uvs, c * 2 );
 
-						intersection.uv = uvIntersection( intersectionPoint,  vA, vB, vC, uvA, uvB, uvC );
+						intersection.uv = uvIntersection( intersectionPoint,  vA, vB, vC,  uvA, uvB, uvC );
 
 					}
 
@@ -14924,27 +14947,32 @@
 
 				}
 
-				var intersection;
+				var uvs, intersection;
 
 				if ( geometry.isBufferGeometry ) {
 
 					var a, b, c;
 					var index = geometry.index;
-					var position = geometry.attributes.position;
-					var uv = geometry.attributes.uv;
-					var i, l;
+					var attributes = geometry.attributes;
+					var positions = attributes.position.array;
+
+					if ( attributes.uv !== undefined ) {
+
+						uvs = attributes.uv.array;
+
+					}
 
 					if ( index !== null ) {
 
-						// indexed buffer geometry
+						var indices = index.array;
 
-						for ( i = 0, l = index.count; i < l; i += 3 ) {
+						for ( var i = 0, l = indices.length; i < l; i += 3 ) {
 
-							a = index.getX( i );
-							b = index.getX( i + 1 );
-							c = index.getX( i + 2 );
+							a = indices[ i ];
+							b = indices[ i + 1 ];
+							c = indices[ i + 2 ];
 
-							intersection = checkBufferGeometryIntersection( this, raycaster, ray, position, uv, a, b, c );
+							intersection = checkBufferGeometryIntersection( this, raycaster, ray, positions, uvs, a, b, c );
 
 							if ( intersection ) {
 
@@ -14957,15 +14985,14 @@
 
 					} else {
 
-						// non-indexed buffer geometry
 
-						for ( i = 0, l = position.count; i < l; i += 3 ) {
+						for ( var i = 0, l = positions.length; i < l; i += 9 ) {
 
-							a = i;
-							b = i + 1;
-							c = i + 2;
+							a = i / 3;
+							b = a + 1;
+							c = a + 2;
 
-							intersection = checkBufferGeometryIntersection( this, raycaster, ray, position, uv, a, b, c );
+							intersection = checkBufferGeometryIntersection( this, raycaster, ray, positions, uvs, a, b, c );
 
 							if ( intersection ) {
 
@@ -14981,13 +15008,11 @@
 				} else if ( geometry.isGeometry ) {
 
 					var fvA, fvB, fvC;
-					var isFaceMaterial = ( material && material.isMultiMaterial );
+					var isFaceMaterial = (material && material.isMultiMaterial);
 					var materials = isFaceMaterial === true ? material.materials : null;
 
 					var vertices = geometry.vertices;
 					var faces = geometry.faces;
-					var uvs;
-
 					var faceVertexUvs = geometry.faceVertexUvs[ 0 ];
 					if ( faceVertexUvs.length > 0 ) uvs = faceVertexUvs;
 
@@ -15071,34 +15096,6 @@
 		}
 
 	} );
-
-	/**
-	 * @author mrdoob / http://mrdoob.com/
-	 * based on http://papervision3d.googlecode.com/svn/trunk/as3/trunk/src/org/papervision3d/objects/primitives/Cube.as
-	 */
-
-	function BoxGeometry( width, height, depth, widthSegments, heightSegments, depthSegments ) {
-
-		Geometry.call( this );
-
-		this.type = 'BoxGeometry';
-
-		this.parameters = {
-			width: width,
-			height: height,
-			depth: depth,
-			widthSegments: widthSegments,
-			heightSegments: heightSegments,
-			depthSegments: depthSegments
-		};
-
-		this.fromBufferGeometry( new BoxBufferGeometry( width, height, depth, widthSegments, heightSegments, depthSegments ) );
-		this.mergeVertices();
-
-	}
-
-	BoxGeometry.prototype = Object.create( Geometry.prototype );
-	BoxGeometry.prototype.constructor = BoxGeometry;
 
 	/**
 	 * @author Mugen87 / https://github.com/Mugen87
@@ -15294,31 +15291,6 @@
 
 	BoxBufferGeometry.prototype = Object.create( BufferGeometry.prototype );
 	BoxBufferGeometry.prototype.constructor = BoxBufferGeometry;
-
-	/**
-	 * @author mrdoob / http://mrdoob.com/
-	 * based on http://papervision3d.googlecode.com/svn/trunk/as3/trunk/src/org/papervision3d/objects/primitives/Plane.as
-	 */
-
-	function PlaneGeometry( width, height, widthSegments, heightSegments ) {
-
-		Geometry.call( this );
-
-		this.type = 'PlaneGeometry';
-
-		this.parameters = {
-			width: width,
-			height: height,
-			widthSegments: widthSegments,
-			heightSegments: heightSegments
-		};
-
-		this.fromBufferGeometry( new PlaneBufferGeometry( width, height, widthSegments, heightSegments ) );
-
-	}
-
-	PlaneGeometry.prototype = Object.create( Geometry.prototype );
-	PlaneGeometry.prototype.constructor = PlaneGeometry;
 
 	/**
 	 * @author mrdoob / http://mrdoob.com/
@@ -15679,7 +15651,8 @@
 			var skew = this.filmOffset;
 			if ( skew !== 0 ) left += near * skew / this.getFilmWidth();
 
-			this.projectionMatrix.makePerspective( left, left + width, top, top - height, near, this.far );
+			this.projectionMatrix.makeFrustum(
+					left, left + width, top - height, top, near, this.far );
 
 		},
 
@@ -20955,7 +20928,7 @@
 					if ( _this.sortObjects === true ) {
 
 						_vector3.setFromMatrixPosition( object.matrixWorld );
-						_vector3.applyMatrix4( _projScreenMatrix );
+						_vector3.applyProjection( _projScreenMatrix );
 
 					}
 
@@ -20978,7 +20951,7 @@
 							if ( _this.sortObjects === true ) {
 
 								_vector3.setFromMatrixPosition( object.matrixWorld );
-								_vector3.applyMatrix4( _projScreenMatrix );
+								_vector3.applyProjection( _projScreenMatrix );
 
 							}
 
@@ -24073,33 +24046,6 @@
 	WireframeGeometry.prototype.constructor = WireframeGeometry;
 
 	/**
-	 * @author zz85 / https://github.com/zz85
-	 *
-	 * Parametric Surfaces Geometry
-	 * based on the brilliant article by @prideout http://prideout.net/blog/?p=44
-	 */
-
-	function ParametricGeometry( func, slices, stacks ) {
-
-		Geometry.call( this );
-
-		this.type = 'ParametricGeometry';
-
-		this.parameters = {
-			func: func,
-			slices: slices,
-			stacks: stacks
-		};
-
-		this.fromBufferGeometry( new ParametricBufferGeometry( func, slices, stacks ) );
-		this.mergeVertices();
-
-	}
-
-	ParametricGeometry.prototype = Object.create( Geometry.prototype );
-	ParametricGeometry.prototype.constructor = ParametricGeometry;
-
-	/**
 	 * @author Mugen87 / https://github.com/Mugen87
 	 *
 	 * Parametric Surfaces Geometry
@@ -24184,31 +24130,31 @@
 	ParametricBufferGeometry.prototype.constructor = ParametricBufferGeometry;
 
 	/**
-	 * @author clockworkgeek / https://github.com/clockworkgeek
-	 * @author timothypratley / https://github.com/timothypratley
-	 * @author WestLangley / http://github.com/WestLangley
-	*/
+	 * @author zz85 / https://github.com/zz85
+	 *
+	 * Parametric Surfaces Geometry
+	 * based on the brilliant article by @prideout http://prideout.net/blog/?p=44
+	 */
 
-	function PolyhedronGeometry( vertices, indices, radius, detail ) {
+	function ParametricGeometry( func, slices, stacks ) {
 
 		Geometry.call( this );
 
-		this.type = 'PolyhedronGeometry';
+		this.type = 'ParametricGeometry';
 
 		this.parameters = {
-			vertices: vertices,
-			indices: indices,
-			radius: radius,
-			detail: detail
+			func: func,
+			slices: slices,
+			stacks: stacks
 		};
 
-		this.fromBufferGeometry( new PolyhedronBufferGeometry( vertices, indices, radius, detail ) );
+		this.fromBufferGeometry( new ParametricBufferGeometry( func, slices, stacks ) );
 		this.mergeVertices();
 
 	}
 
-	PolyhedronGeometry.prototype = Object.create( Geometry.prototype );
-	PolyhedronGeometry.prototype.constructor = PolyhedronGeometry;
+	ParametricGeometry.prototype = Object.create( Geometry.prototype );
+	ParametricGeometry.prototype.constructor = ParametricGeometry;
 
 	/**
 	 * @author Mugen87 / https://github.com/Mugen87
@@ -24294,7 +24240,7 @@
 
 			// construct all of the vertices for this subdivision
 
-			for ( i = 0; i <= cols; i ++ ) {
+			for ( i = 0 ; i <= cols; i ++ ) {
 
 				v[ i ] = [];
 
@@ -24321,7 +24267,7 @@
 
 			// construct all of the faces
 
-			for ( i = 0; i < cols; i ++ ) {
+			for ( i = 0; i < cols ; i ++ ) {
 
 				for ( j = 0; j < 2 * ( cols - i ) - 1; j ++ ) {
 
@@ -24470,11 +24416,11 @@
 
 		}
 
-		function correctUV( uv, stride, vector, azimuth ) {
+		function correctUV( uv, stride, vector, azimuth  ) {
 
 			if ( ( azimuth < 0 ) && ( uv.x === 1 ) ) {
 
-				uvBuffer[ stride ] = uv.x - 1;
+				uvBuffer[ stride ] =  uv.x - 1;
 
 			}
 
@@ -24509,29 +24455,6 @@
 	PolyhedronBufferGeometry.prototype.constructor = PolyhedronBufferGeometry;
 
 	/**
-	 * @author timothypratley / https://github.com/timothypratley
-	 */
-
-	function TetrahedronGeometry( radius, detail ) {
-
-		Geometry.call( this );
-
-		this.type = 'TetrahedronGeometry';
-
-		this.parameters = {
-			radius: radius,
-			detail: detail
-		};
-
-		this.fromBufferGeometry( new TetrahedronBufferGeometry( radius, detail ) );
-		this.mergeVertices();
-
-	}
-
-	TetrahedronGeometry.prototype = Object.create( Geometry.prototype );
-	TetrahedronGeometry.prototype.constructor = TetrahedronGeometry;
-
-	/**
 	 * @author Mugen87 / https://github.com/Mugen87
 	 */
 
@@ -24563,30 +24486,30 @@
 	 * @author timothypratley / https://github.com/timothypratley
 	 */
 
-	function OctahedronGeometry( radius, detail ) {
+	function TetrahedronGeometry( radius, detail ) {
 
 		Geometry.call( this );
 
-		this.type = 'OctahedronGeometry';
+		this.type = 'TetrahedronGeometry';
 
 		this.parameters = {
 			radius: radius,
 			detail: detail
 		};
 
-		this.fromBufferGeometry( new OctahedronBufferGeometry( radius, detail ) );
+		this.fromBufferGeometry( new TetrahedronBufferGeometry( radius, detail ) );
 		this.mergeVertices();
 
 	}
 
-	OctahedronGeometry.prototype = Object.create( Geometry.prototype );
-	OctahedronGeometry.prototype.constructor = OctahedronGeometry;
+	TetrahedronGeometry.prototype = Object.create( Geometry.prototype );
+	TetrahedronGeometry.prototype.constructor = TetrahedronGeometry;
 
 	/**
 	 * @author Mugen87 / https://github.com/Mugen87
 	 */
 
-	function OctahedronBufferGeometry( radius, detail ) {
+	function OctahedronBufferGeometry( radius,detail ) {
 
 		var vertices = [
 			1, 0, 0,   - 1, 0, 0,    0, 1, 0,    0, - 1, 0,    0, 0, 1,    0, 0, - 1
@@ -24614,24 +24537,24 @@
 	 * @author timothypratley / https://github.com/timothypratley
 	 */
 
-	function IcosahedronGeometry( radius, detail ) {
+	function OctahedronGeometry( radius, detail ) {
 
-	 	Geometry.call( this );
+		Geometry.call( this );
 
-		this.type = 'IcosahedronGeometry';
+		this.type = 'OctahedronGeometry';
 
 		this.parameters = {
 			radius: radius,
 			detail: detail
 		};
 
-		this.fromBufferGeometry( new IcosahedronBufferGeometry( radius, detail ) );
+		this.fromBufferGeometry( new OctahedronBufferGeometry( radius, detail ) );
 		this.mergeVertices();
 
 	}
 
-	IcosahedronGeometry.prototype = Object.create( Geometry.prototype );
-	IcosahedronGeometry.prototype.constructor = IcosahedronGeometry;
+	OctahedronGeometry.prototype = Object.create( Geometry.prototype );
+	OctahedronGeometry.prototype.constructor = OctahedronGeometry;
 
 	/**
 	 * @author Mugen87 / https://github.com/Mugen87
@@ -24669,27 +24592,27 @@
 	IcosahedronBufferGeometry.prototype.constructor = IcosahedronBufferGeometry;
 
 	/**
-	 * @author Abe Pazos / https://hamoid.com
+	 * @author timothypratley / https://github.com/timothypratley
 	 */
 
-	function DodecahedronGeometry( radius, detail ) {
+	function IcosahedronGeometry( radius, detail ) {
 
-		Geometry.call( this );
+	 	Geometry.call( this );
 
-		this.type = 'DodecahedronGeometry';
+		this.type = 'IcosahedronGeometry';
 
 		this.parameters = {
 			radius: radius,
 			detail: detail
 		};
 
-		this.fromBufferGeometry( new DodecahedronBufferGeometry( radius, detail ) );
+		this.fromBufferGeometry( new IcosahedronBufferGeometry( radius, detail ) );
 		this.mergeVertices();
 
 	}
 
-	DodecahedronGeometry.prototype = Object.create( Geometry.prototype );
-	DodecahedronGeometry.prototype.constructor = DodecahedronGeometry;
+	IcosahedronGeometry.prototype = Object.create( Geometry.prototype );
+	IcosahedronGeometry.prototype.constructor = IcosahedronGeometry;
 
 	/**
 	 * @author Mugen87 / https://github.com/Mugen87
@@ -24705,8 +24628,8 @@
 			// (±1, ±1, ±1)
 			- 1, - 1, - 1,    - 1, - 1,  1,
 			- 1,  1, - 1,    - 1,  1,  1,
-			  1, - 1, - 1,     1, - 1,  1,
-			  1,  1, - 1,     1,  1,  1,
+			 1, - 1, - 1,     1, - 1,  1,
+			 1,  1, - 1,     1,  1,  1,
 
 			// (0, ±1/φ, ±φ)
 			 0, - r, - t,     0, - r,  t,
@@ -24751,51 +24674,60 @@
 	DodecahedronBufferGeometry.prototype.constructor = DodecahedronBufferGeometry;
 
 	/**
-	 * @author oosmoxiecode / https://github.com/oosmoxiecode
-	 * @author WestLangley / https://github.com/WestLangley
-	 * @author zz85 / https://github.com/zz85
-	 * @author miningold / https://github.com/miningold
-	 * @author jonobr1 / https://github.com/jonobr1
-	 *
-	 * Creates a tube which extrudes along a 3d spline.
+	 * @author Abe Pazos / https://hamoid.com
 	 */
 
-	function TubeGeometry( path, tubularSegments, radius, radialSegments, closed, taper ) {
+	function DodecahedronGeometry( radius, detail ) {
 
 		Geometry.call( this );
 
-		this.type = 'TubeGeometry';
+		this.type = 'DodecahedronGeometry';
 
 		this.parameters = {
-			path: path,
-			tubularSegments: tubularSegments,
 			radius: radius,
-			radialSegments: radialSegments,
-			closed: closed
+			detail: detail
 		};
 
-		if ( taper !== undefined ) console.warn( 'THREE.TubeGeometry: taper has been removed.' );
-
-		var bufferGeometry = new TubeBufferGeometry( path, tubularSegments, radius, radialSegments, closed );
-
-		// expose internals
-
-		this.tangents = bufferGeometry.tangents;
-		this.normals = bufferGeometry.normals;
-		this.binormals = bufferGeometry.binormals;
-
-		// create geometry
-
-		this.fromBufferGeometry( bufferGeometry );
+		this.fromBufferGeometry( new DodecahedronBufferGeometry( radius, detail ) );
 		this.mergeVertices();
 
 	}
 
-	TubeGeometry.prototype = Object.create( Geometry.prototype );
-	TubeGeometry.prototype.constructor = TubeGeometry;
+	DodecahedronGeometry.prototype = Object.create( Geometry.prototype );
+	DodecahedronGeometry.prototype.constructor = DodecahedronGeometry;
+
+	/**
+	 * @author clockworkgeek / https://github.com/clockworkgeek
+	 * @author timothypratley / https://github.com/timothypratley
+	 * @author WestLangley / http://github.com/WestLangley
+	*/
+
+	function PolyhedronGeometry( vertices, indices, radius, detail ) {
+
+		Geometry.call( this );
+
+		this.type = 'PolyhedronGeometry';
+
+		this.parameters = {
+			vertices: vertices,
+			indices: indices,
+			radius: radius,
+			detail: detail
+		};
+
+		this.fromBufferGeometry( new PolyhedronBufferGeometry( vertices, indices, radius, detail ) );
+		this.mergeVertices();
+
+	}
+
+	PolyhedronGeometry.prototype = Object.create( Geometry.prototype );
+	PolyhedronGeometry.prototype.constructor = PolyhedronGeometry;
 
 	/**
 	 * @author Mugen87 / https://github.com/Mugen87
+	 *
+	 * Creates a tube which extrudes along a 3d spline.
+	 *
 	 */
 
 	function TubeBufferGeometry( path, tubularSegments, radius, radialSegments, closed ) {
@@ -24965,39 +24897,54 @@
 	TubeBufferGeometry.prototype.constructor = TubeBufferGeometry;
 
 	/**
-	 * @author oosmoxiecode
+	 * @author oosmoxiecode / https://github.com/oosmoxiecode
+	 * @author WestLangley / https://github.com/WestLangley
+	 * @author zz85 / https://github.com/zz85
+	 * @author miningold / https://github.com/miningold
+	 * @author jonobr1 / https://github.com/jonobr1
+	 *
+	 * Creates a tube which extrudes along a 3d spline.
 	 */
 
-	function TorusKnotGeometry( radius, tube, tubularSegments, radialSegments, p, q, heightScale ) {
+	function TubeGeometry( path, tubularSegments, radius, radialSegments, closed, taper ) {
 
 		Geometry.call( this );
 
-		this.type = 'TorusKnotGeometry';
+		this.type = 'TubeGeometry';
 
 		this.parameters = {
-			radius: radius,
-			tube: tube,
+			path: path,
 			tubularSegments: tubularSegments,
+			radius: radius,
 			radialSegments: radialSegments,
-			p: p,
-			q: q
+			closed: closed
 		};
 
-		if ( heightScale !== undefined ) console.warn( 'THREE.TorusKnotGeometry: heightScale has been deprecated. Use .scale( x, y, z ) instead.' );
+		if ( taper !== undefined ) console.warn( 'THREE.TubeGeometry: taper has been removed.' );
 
-		this.fromBufferGeometry( new TorusKnotBufferGeometry( radius, tube, tubularSegments, radialSegments, p, q ) );
+		var bufferGeometry = new TubeBufferGeometry( path, tubularSegments, radius, radialSegments, closed );
+
+		// expose internals
+
+		this.tangents = bufferGeometry.tangents;
+		this.normals = bufferGeometry.normals;
+		this.binormals = bufferGeometry.binormals;
+
+		// create geometry
+
+		this.fromBufferGeometry( bufferGeometry );
 		this.mergeVertices();
 
 	}
 
-	TorusKnotGeometry.prototype = Object.create( Geometry.prototype );
-	TorusKnotGeometry.prototype.constructor = TorusKnotGeometry;
+	TubeGeometry.prototype = Object.create( Geometry.prototype );
+	TubeGeometry.prototype.constructor = TubeGeometry;
 
 	/**
 	 * @author Mugen87 / https://github.com/Mugen87
+	 *
 	 * see: http://www.blackpawn.com/texts/pqtorus/
 	 */
-
 	function TorusKnotBufferGeometry( radius, tube, tubularSegments, radialSegments, p, q ) {
 
 		BufferGeometry.call( this );
@@ -25025,7 +24972,7 @@
 		var indexCount = radialSegments * tubularSegments * 2 * 3;
 
 		// buffers
-		var indices = new BufferAttribute( new ( indexCount > 65535 ? Uint32Array : Uint16Array )( indexCount ), 1 );
+		var indices = new BufferAttribute( new ( indexCount > 65535 ? Uint32Array : Uint16Array )( indexCount ) , 1 );
 		var vertices = new BufferAttribute( new Float32Array( vertexCount * 3 ), 3 );
 		var normals = new BufferAttribute( new Float32Array( vertexCount * 3 ), 3 );
 		var uvs = new BufferAttribute( new Float32Array( vertexCount * 2 ), 2 );
@@ -25118,14 +25065,14 @@
 				var d = ( radialSegments + 1 ) * ( j - 1 ) + i;
 
 				// face one
-				indices.setX( indexOffset, a ); indexOffset ++;
-				indices.setX( indexOffset, b ); indexOffset ++;
-				indices.setX( indexOffset, d ); indexOffset ++;
+				indices.setX( indexOffset, a ); indexOffset++;
+				indices.setX( indexOffset, b ); indexOffset++;
+				indices.setX( indexOffset, d ); indexOffset++;
 
 				// face two
-				indices.setX( indexOffset, b ); indexOffset ++;
-				indices.setX( indexOffset, c ); indexOffset ++;
-				indices.setX( indexOffset, d ); indexOffset ++;
+				indices.setX( indexOffset, b ); indexOffset++;
+				indices.setX( indexOffset, c ); indexOffset++;
+				indices.setX( indexOffset, d ); indexOffset++;
 
 			}
 
@@ -25160,30 +25107,32 @@
 
 	/**
 	 * @author oosmoxiecode
-	 * @author mrdoob / http://mrdoob.com/
-	 * based on http://code.google.com/p/away3d/source/browse/trunk/fp10/Away3DLite/src/away3dlite/primitives/Torus.as?r=2888
 	 */
 
-	function TorusGeometry( radius, tube, radialSegments, tubularSegments, arc ) {
+	function TorusKnotGeometry( radius, tube, tubularSegments, radialSegments, p, q, heightScale ) {
 
 		Geometry.call( this );
 
-		this.type = 'TorusGeometry';
+		this.type = 'TorusKnotGeometry';
 
 		this.parameters = {
 			radius: radius,
 			tube: tube,
-			radialSegments: radialSegments,
 			tubularSegments: tubularSegments,
-			arc: arc
+			radialSegments: radialSegments,
+			p: p,
+			q: q
 		};
 
-		this.fromBufferGeometry( new TorusBufferGeometry( radius, tube, radialSegments, tubularSegments, arc ) );
+		if( heightScale !== undefined ) console.warn( 'THREE.TorusKnotGeometry: heightScale has been deprecated. Use .scale( x, y, z ) instead.' );
+
+		this.fromBufferGeometry( new TorusKnotBufferGeometry( radius, tube, tubularSegments, radialSegments, p, q ) );
+		this.mergeVertices();
 
 	}
 
-	TorusGeometry.prototype = Object.create( Geometry.prototype );
-	TorusGeometry.prototype.constructor = TorusGeometry;
+	TorusKnotGeometry.prototype = Object.create( Geometry.prototype );
+	TorusKnotGeometry.prototype.constructor = TorusKnotGeometry;
 
 	/**
 	 * @author Mugen87 / https://github.com/Mugen87
@@ -25311,6 +25260,33 @@
 
 	TorusBufferGeometry.prototype = Object.create( BufferGeometry.prototype );
 	TorusBufferGeometry.prototype.constructor = TorusBufferGeometry;
+
+	/**
+	 * @author oosmoxiecode
+	 * @author mrdoob / http://mrdoob.com/
+	 * based on http://code.google.com/p/away3d/source/browse/trunk/fp10/Away3DLite/src/away3dlite/primitives/Torus.as?r=2888
+	 */
+
+	function TorusGeometry( radius, tube, radialSegments, tubularSegments, arc ) {
+
+		Geometry.call( this );
+
+		this.type = 'TorusGeometry';
+
+		this.parameters = {
+			radius: radius,
+			tube: tube,
+			radialSegments: radialSegments,
+			tubularSegments: tubularSegments,
+			arc: arc
+		};
+
+		this.fromBufferGeometry( new TorusBufferGeometry( radius, tube, radialSegments, tubularSegments, arc ) );
+
+	}
+
+	TorusGeometry.prototype = Object.create( Geometry.prototype );
+	TorusGeometry.prototype.constructor = TorusGeometry;
 
 	/**
 	 * @author zz85 / http://www.lab4games.net/zz85/blog
@@ -26001,7 +25977,80 @@
 
 			return ShapeUtils.area( pts ) < 0;
 
-		}
+		},
+
+		// Bezier Curves formulas obtained from
+		// http://en.wikipedia.org/wiki/B%C3%A9zier_curve
+
+		// Quad Bezier Functions
+
+		b2: ( function () {
+
+			function b2p0( t, p ) {
+
+				var k = 1 - t;
+				return k * k * p;
+
+			}
+
+			function b2p1( t, p ) {
+
+				return 2 * ( 1 - t ) * t * p;
+
+			}
+
+			function b2p2( t, p ) {
+
+				return t * t * p;
+
+			}
+
+			return function b2( t, p0, p1, p2 ) {
+
+				return b2p0( t, p0 ) + b2p1( t, p1 ) + b2p2( t, p2 );
+
+			};
+
+		} )(),
+
+		// Cubic Bezier Functions
+
+		b3: ( function () {
+
+			function b3p0( t, p ) {
+
+				var k = 1 - t;
+				return k * k * k * p;
+
+			}
+
+			function b3p1( t, p ) {
+
+				var k = 1 - t;
+				return 3 * k * k * t * p;
+
+			}
+
+			function b3p2( t, p ) {
+
+				var k = 1 - t;
+				return 3 * k * t * t * p;
+
+			}
+
+			function b3p3( t, p ) {
+
+				return t * t * t * p;
+
+			}
+
+			return function b3( t, p0, p1, p2, p3 ) {
+
+				return b3p0( t, p0 ) + b3p1( t, p1 ) + b3p2( t, p2 ) + b3p3( t, p3 );
+
+			};
+
+		} )()
 
 	};
 
@@ -26759,34 +26808,8 @@
 	TextGeometry.prototype.constructor = TextGeometry;
 
 	/**
-	 * @author mrdoob / http://mrdoob.com/
-	 */
-
-	function SphereGeometry( radius, widthSegments, heightSegments, phiStart, phiLength, thetaStart, thetaLength ) {
-
-		Geometry.call( this );
-
-		this.type = 'SphereGeometry';
-
-		this.parameters = {
-			radius: radius,
-			widthSegments: widthSegments,
-			heightSegments: heightSegments,
-			phiStart: phiStart,
-			phiLength: phiLength,
-			thetaStart: thetaStart,
-			thetaLength: thetaLength
-		};
-
-		this.fromBufferGeometry( new SphereBufferGeometry( radius, widthSegments, heightSegments, phiStart, phiLength, thetaStart, thetaLength ) );
-
-	}
-
-	SphereGeometry.prototype = Object.create( Geometry.prototype );
-	SphereGeometry.prototype.constructor = SphereGeometry;
-
-	/**
 	 * @author benaadams / https://twitter.com/ben_a_adams
+	 * based on THREE.SphereGeometry
 	 */
 
 	function SphereBufferGeometry( radius, widthSegments, heightSegments, phiStart, phiLength, thetaStart, thetaLength ) {
@@ -26887,30 +26910,31 @@
 	SphereBufferGeometry.prototype.constructor = SphereBufferGeometry;
 
 	/**
-	 * @author Kaleb Murphy
+	 * @author mrdoob / http://mrdoob.com/
 	 */
 
-	function RingGeometry( innerRadius, outerRadius, thetaSegments, phiSegments, thetaStart, thetaLength ) {
+	function SphereGeometry( radius, widthSegments, heightSegments, phiStart, phiLength, thetaStart, thetaLength ) {
 
 		Geometry.call( this );
 
-		this.type = 'RingGeometry';
+		this.type = 'SphereGeometry';
 
 		this.parameters = {
-			innerRadius: innerRadius,
-			outerRadius: outerRadius,
-			thetaSegments: thetaSegments,
-			phiSegments: phiSegments,
+			radius: radius,
+			widthSegments: widthSegments,
+			heightSegments: heightSegments,
+			phiStart: phiStart,
+			phiLength: phiLength,
 			thetaStart: thetaStart,
 			thetaLength: thetaLength
 		};
 
-		this.fromBufferGeometry( new RingBufferGeometry( innerRadius, outerRadius, thetaSegments, phiSegments, thetaStart, thetaLength ) );
+		this.fromBufferGeometry( new SphereBufferGeometry( radius, widthSegments, heightSegments, phiStart, phiLength, thetaStart, thetaLength ) );
 
 	}
 
-	RingGeometry.prototype = Object.create( Geometry.prototype );
-	RingGeometry.prototype.constructor = RingGeometry;
+	SphereGeometry.prototype = Object.create( Geometry.prototype );
+	SphereGeometry.prototype.constructor = SphereGeometry;
 
 	/**
 	 * @author Mugen87 / https://github.com/Mugen87
@@ -26945,7 +26969,7 @@
 		var indexCount = thetaSegments * phiSegments * 2 * 3;
 
 		// buffers
-		var indices = new BufferAttribute( new ( indexCount > 65535 ? Uint32Array : Uint16Array )( indexCount ), 1 );
+		var indices = new BufferAttribute( new ( indexCount > 65535 ? Uint32Array : Uint16Array )( indexCount ) , 1 );
 		var vertices = new BufferAttribute( new Float32Array( vertexCount * 3 ), 3 );
 		var normals = new BufferAttribute( new Float32Array( vertexCount * 3 ), 3 );
 		var uvs = new BufferAttribute( new Float32Array( vertexCount * 2 ), 2 );
@@ -26982,7 +27006,7 @@
 				uvs.setXY( index, uv.x, uv.y );
 
 				// increase index
-				index ++;
+				index++;
 
 			}
 
@@ -27008,14 +27032,14 @@
 				var d = segment + 1;
 
 				// face one
-				indices.setX( indexOffset, a ); indexOffset ++;
-				indices.setX( indexOffset, b ); indexOffset ++;
-				indices.setX( indexOffset, c ); indexOffset ++;
+				indices.setX( indexOffset, a ); indexOffset++;
+				indices.setX( indexOffset, b ); indexOffset++;
+				indices.setX( indexOffset, c ); indexOffset++;
 
 				// face two
-				indices.setX( indexOffset, a ); indexOffset ++;
-				indices.setX( indexOffset, c ); indexOffset ++;
-				indices.setX( indexOffset, d ); indexOffset ++;
+				indices.setX( indexOffset, a ); indexOffset++;
+				indices.setX( indexOffset, c ); indexOffset++;
+				indices.setX( indexOffset, d ); indexOffset++;
 
 			}
 
@@ -27034,42 +27058,66 @@
 	RingBufferGeometry.prototype.constructor = RingBufferGeometry;
 
 	/**
-	 * @author astrodud / http://astrodud.isgreat.org/
-	 * @author zz85 / https://github.com/zz85
-	 * @author bhouston / http://clara.io
+	 * @author Kaleb Murphy
 	 */
 
-	// points - to create a closed torus, one must use a set of points
-	//    like so: [ a, b, c, d, a ], see first is the same as last.
-	// segments - the number of circumference segments to create
-	// phiStart - the starting radian
-	// phiLength - the radian (0 to 2PI) range of the lathed section
-	//    2PI is a closed lathe, less than 2PI is a portion.
-
-	function LatheGeometry( points, segments, phiStart, phiLength ) {
+	function RingGeometry( innerRadius, outerRadius, thetaSegments, phiSegments, thetaStart, thetaLength ) {
 
 		Geometry.call( this );
 
-		this.type = 'LatheGeometry';
+		this.type = 'RingGeometry';
 
 		this.parameters = {
-			points: points,
-			segments: segments,
-			phiStart: phiStart,
-			phiLength: phiLength
+			innerRadius: innerRadius,
+			outerRadius: outerRadius,
+			thetaSegments: thetaSegments,
+			phiSegments: phiSegments,
+			thetaStart: thetaStart,
+			thetaLength: thetaLength
 		};
 
-		this.fromBufferGeometry( new LatheBufferGeometry( points, segments, phiStart, phiLength ) );
-		this.mergeVertices();
+		this.fromBufferGeometry( new RingBufferGeometry( innerRadius, outerRadius, thetaSegments, phiSegments, thetaStart, thetaLength ) );
 
 	}
 
-	LatheGeometry.prototype = Object.create( Geometry.prototype );
-	LatheGeometry.prototype.constructor = LatheGeometry;
+	RingGeometry.prototype = Object.create( Geometry.prototype );
+	RingGeometry.prototype.constructor = RingGeometry;
+
+	/**
+	 * @author mrdoob / http://mrdoob.com/
+	 * based on http://papervision3d.googlecode.com/svn/trunk/as3/trunk/src/org/papervision3d/objects/primitives/Plane.as
+	 */
+
+	function PlaneGeometry( width, height, widthSegments, heightSegments ) {
+
+		Geometry.call( this );
+
+		this.type = 'PlaneGeometry';
+
+		this.parameters = {
+			width: width,
+			height: height,
+			widthSegments: widthSegments,
+			heightSegments: heightSegments
+		};
+
+		this.fromBufferGeometry( new PlaneBufferGeometry( width, height, widthSegments, heightSegments ) );
+
+	}
+
+	PlaneGeometry.prototype = Object.create( Geometry.prototype );
+	PlaneGeometry.prototype.constructor = PlaneGeometry;
 
 	/**
 	 * @author Mugen87 / https://github.com/Mugen87
 	 */
+
+	 // points - to create a closed torus, one must use a set of points
+	 //    like so: [ a, b, c, d, a ], see first is the same as last.
+	 // segments - the number of circumference segments to create
+	 // phiStart - the starting radian
+	 // phiLength - the radian (0 to 2PI) range of the lathed section
+	 //    2PI is a closed lathe, less than 2PI is a portion.
 
 	function LatheBufferGeometry( points, segments, phiStart, phiLength ) {
 
@@ -27151,14 +27199,14 @@
 				var d = base + 1;
 
 				// face one
-				indices.setX( indexOffset, a ); indexOffset ++;
-				indices.setX( indexOffset, b ); indexOffset ++;
-				indices.setX( indexOffset, d ); indexOffset ++;
+				indices.setX( indexOffset, a ); indexOffset++;
+				indices.setX( indexOffset, b ); indexOffset++;
+				indices.setX( indexOffset, d ); indexOffset++;
 
 				// face two
-				indices.setX( indexOffset, b ); indexOffset ++;
-				indices.setX( indexOffset, c ); indexOffset ++;
-				indices.setX( indexOffset, d ); indexOffset ++;
+				indices.setX( indexOffset, b ); indexOffset++;
+				indices.setX( indexOffset, c ); indexOffset++;
+				indices.setX( indexOffset, d ); indexOffset++;
 
 			}
 
@@ -27177,7 +27225,7 @@
 		// if the geometry is closed, we need to average the normals along the seam.
 		// because the corresponding vertices are identical (but still have different UVs).
 
-		if ( phiLength === Math.PI * 2 ) {
+		if( phiLength === Math.PI * 2 ) {
 
 			var normals = this.attributes.normal.array;
 			var n1 = new Vector3();
@@ -27187,7 +27235,7 @@
 			// this is the buffer offset for the last line of vertices
 			base = segments * points.length * 3;
 
-			for ( i = 0, j = 0; i < points.length; i ++, j += 3 ) {
+			for( i = 0, j = 0; i < points.length; i ++, j += 3 ) {
 
 				// select the normal of the vertex in the first line
 				n1.x = normals[ j + 0 ];
@@ -27217,39 +27265,45 @@
 	LatheBufferGeometry.prototype.constructor = LatheBufferGeometry;
 
 	/**
-	 * @author jonobr1 / http://jonobr1.com
+	 * @author astrodud / http://astrodud.isgreat.org/
+	 * @author zz85 / https://github.com/zz85
+	 * @author bhouston / http://clara.io
 	 */
 
-	function ShapeGeometry( shapes, curveSegments ) {
+	// points - to create a closed torus, one must use a set of points
+	//    like so: [ a, b, c, d, a ], see first is the same as last.
+	// segments - the number of circumference segments to create
+	// phiStart - the starting radian
+	// phiLength - the radian (0 to 2PI) range of the lathed section
+	//    2PI is a closed lathe, less than 2PI is a portion.
+
+	function LatheGeometry( points, segments, phiStart, phiLength ) {
 
 		Geometry.call( this );
 
-		this.type = 'ShapeGeometry';
-
-		if ( typeof curveSegments === 'object' ) {
-
-			console.warn( 'THREE.ShapeGeometry: Options parameter has been removed.' );
-
-			curveSegments = curveSegments.curveSegments;
-
-		}
+		this.type = 'LatheGeometry';
 
 		this.parameters = {
-			shapes: shapes,
-			curveSegments: curveSegments
+			points: points,
+			segments: segments,
+			phiStart: phiStart,
+			phiLength: phiLength
 		};
 
-		this.fromBufferGeometry( new ShapeBufferGeometry( shapes, curveSegments ) );
+		this.fromBufferGeometry( new LatheBufferGeometry( points, segments, phiStart, phiLength ) );
 		this.mergeVertices();
 
 	}
 
-	ShapeGeometry.prototype = Object.create( Geometry.prototype );
-	ShapeGeometry.prototype.constructor = ShapeGeometry;
+	LatheGeometry.prototype = Object.create( Geometry.prototype );
+	LatheGeometry.prototype.constructor = LatheGeometry;
 
 	/**
 	 * @author Mugen87 / https://github.com/Mugen87
-	 */
+	 *
+	 * Creates a one-sided polygonal geometry from one or more shapes.
+	 *
+	 **/
 
 	function ShapeBufferGeometry( shapes, curveSegments ) {
 
@@ -27280,7 +27334,7 @@
 
 		} else {
 
-			for ( var i = 0; i < shapes.length; i ++ ) {
+			for ( var i = 0; i < shapes.length; i++ ) {
 
 				addShape( shapes[ i ] );
 
@@ -27381,6 +27435,40 @@
 	ShapeBufferGeometry.prototype.constructor = ShapeBufferGeometry;
 
 	/**
+	 * @author jonobr1 / http://jonobr1.com
+	 *
+	 * Creates a one-sided polygonal geometry from a path shape.
+	 *
+	 **/
+
+	function ShapeGeometry( shapes, curveSegments ) {
+
+		Geometry.call( this );
+
+		this.type = 'ShapeGeometry';
+
+		if ( typeof curveSegments === 'object' ) {
+
+			console.warn( 'THREE.ShapeGeometry: Options parameter has been removed.' );
+
+			curveSegments = curveSegments.curveSegments;
+
+		}
+
+		this.parameters = {
+			shapes: shapes,
+			curveSegments: curveSegments
+		};
+
+		this.fromBufferGeometry( new ShapeBufferGeometry( shapes, curveSegments ) );
+		this.mergeVertices();
+
+	}
+
+	ShapeGeometry.prototype = Object.create( Geometry.prototype );
+	ShapeGeometry.prototype.constructor = ShapeGeometry;
+
+	/**
 	 * @author WestLangley / http://github.com/WestLangley
 	 */
 
@@ -27477,35 +27565,6 @@
 
 	EdgesGeometry.prototype = Object.create( BufferGeometry.prototype );
 	EdgesGeometry.prototype.constructor = EdgesGeometry;
-
-	/**
-	 * @author mrdoob / http://mrdoob.com/
-	 */
-
-	function CylinderGeometry( radiusTop, radiusBottom, height, radialSegments, heightSegments, openEnded, thetaStart, thetaLength ) {
-
-		Geometry.call( this );
-
-		this.type = 'CylinderGeometry';
-
-		this.parameters = {
-			radiusTop: radiusTop,
-			radiusBottom: radiusBottom,
-			height: height,
-			radialSegments: radialSegments,
-			heightSegments: heightSegments,
-			openEnded: openEnded,
-			thetaStart: thetaStart,
-			thetaLength: thetaLength
-		};
-
-		this.fromBufferGeometry( new CylinderBufferGeometry( radiusTop, radiusBottom, height, radialSegments, heightSegments, openEnded, thetaStart, thetaLength ) );
-		this.mergeVertices();
-
-	}
-
-	CylinderGeometry.prototype = Object.create( Geometry.prototype );
-	CylinderGeometry.prototype.constructor = CylinderGeometry;
 
 	/**
 	 * @author Mugen87 / https://github.com/Mugen87
@@ -27826,6 +27885,35 @@
 	CylinderBufferGeometry.prototype.constructor = CylinderBufferGeometry;
 
 	/**
+	 * @author mrdoob / http://mrdoob.com/
+	 */
+
+	function CylinderGeometry( radiusTop, radiusBottom, height, radialSegments, heightSegments, openEnded, thetaStart, thetaLength ) {
+
+		Geometry.call( this );
+
+		this.type = 'CylinderGeometry';
+
+		this.parameters = {
+			radiusTop: radiusTop,
+			radiusBottom: radiusBottom,
+			height: height,
+			radialSegments: radialSegments,
+			heightSegments: heightSegments,
+			openEnded: openEnded,
+			thetaStart: thetaStart,
+			thetaLength: thetaLength
+		};
+
+		this.fromBufferGeometry( new CylinderBufferGeometry( radiusTop, radiusBottom, height, radialSegments, heightSegments, openEnded, thetaStart, thetaLength ) );
+		this.mergeVertices();
+
+	}
+
+	CylinderGeometry.prototype = Object.create( Geometry.prototype );
+	CylinderGeometry.prototype.constructor = CylinderGeometry;
+
+	/**
 	 * @author abelnation / http://github.com/abelnation
 	 */
 
@@ -27874,30 +27962,6 @@
 
 	ConeBufferGeometry.prototype = Object.create( CylinderBufferGeometry.prototype );
 	ConeBufferGeometry.prototype.constructor = ConeBufferGeometry;
-
-	/**
-	 * @author hughes
-	 */
-
-	function CircleGeometry( radius, segments, thetaStart, thetaLength ) {
-
-		Geometry.call( this );
-
-		this.type = 'CircleGeometry';
-
-		this.parameters = {
-			radius: radius,
-			segments: segments,
-			thetaStart: thetaStart,
-			thetaLength: thetaLength
-		};
-
-		this.fromBufferGeometry( new CircleBufferGeometry( radius, segments, thetaStart, thetaLength ) );
-
-	}
-
-	CircleGeometry.prototype = Object.create( Geometry.prototype );
-	CircleGeometry.prototype.constructor = CircleGeometry;
 
 	/**
 	 * @author benaadams / https://twitter.com/ben_a_adams
@@ -27967,6 +28031,58 @@
 	CircleBufferGeometry.prototype = Object.create( BufferGeometry.prototype );
 	CircleBufferGeometry.prototype.constructor = CircleBufferGeometry;
 
+	/**
+	 * @author hughes
+	 */
+
+	function CircleGeometry( radius, segments, thetaStart, thetaLength ) {
+
+		Geometry.call( this );
+
+		this.type = 'CircleGeometry';
+
+		this.parameters = {
+			radius: radius,
+			segments: segments,
+			thetaStart: thetaStart,
+			thetaLength: thetaLength
+		};
+
+		this.fromBufferGeometry( new CircleBufferGeometry( radius, segments, thetaStart, thetaLength ) );
+
+	}
+
+	CircleGeometry.prototype = Object.create( Geometry.prototype );
+	CircleGeometry.prototype.constructor = CircleGeometry;
+
+	/**
+	 * @author mrdoob / http://mrdoob.com/
+	 * based on http://papervision3d.googlecode.com/svn/trunk/as3/trunk/src/org/papervision3d/objects/primitives/Cube.as
+	 */
+
+	function BoxGeometry( width, height, depth, widthSegments, heightSegments, depthSegments ) {
+
+		Geometry.call( this );
+
+		this.type = 'BoxGeometry';
+
+		this.parameters = {
+			width: width,
+			height: height,
+			depth: depth,
+			widthSegments: widthSegments,
+			heightSegments: heightSegments,
+			depthSegments: depthSegments
+		};
+
+		this.fromBufferGeometry( new BoxBufferGeometry( width, height, depth, widthSegments, heightSegments, depthSegments ) );
+		this.mergeVertices();
+
+	}
+
+	BoxGeometry.prototype = Object.create( Geometry.prototype );
+	BoxGeometry.prototype.constructor = BoxGeometry;
+
 
 
 	var Geometries = Object.freeze({
@@ -27990,12 +28106,12 @@
 		TorusGeometry: TorusGeometry,
 		TorusBufferGeometry: TorusBufferGeometry,
 		TextGeometry: TextGeometry,
-		SphereGeometry: SphereGeometry,
 		SphereBufferGeometry: SphereBufferGeometry,
+		SphereGeometry: SphereGeometry,
 		RingGeometry: RingGeometry,
 		RingBufferGeometry: RingBufferGeometry,
-		PlaneGeometry: PlaneGeometry,
 		PlaneBufferGeometry: PlaneBufferGeometry,
+		PlaneGeometry: PlaneGeometry,
 		LatheGeometry: LatheGeometry,
 		LatheBufferGeometry: LatheBufferGeometry,
 		ShapeGeometry: ShapeGeometry,
@@ -28006,10 +28122,10 @@
 		ConeBufferGeometry: ConeBufferGeometry,
 		CylinderGeometry: CylinderGeometry,
 		CylinderBufferGeometry: CylinderBufferGeometry,
-		CircleGeometry: CircleGeometry,
 		CircleBufferGeometry: CircleBufferGeometry,
-		BoxGeometry: BoxGeometry,
-		BoxBufferGeometry: BoxBufferGeometry
+		CircleGeometry: CircleGeometry,
+		BoxBufferGeometry: BoxBufferGeometry,
+		BoxGeometry: BoxGeometry
 	});
 
 	/**
@@ -29320,7 +29436,8 @@
 	 * Abstract Base class to load generic binary textures formats (rgbe, hdr, ...)
 	 */
 
-	function DataTextureLoader( manager ) {
+	var DataTextureLoader = BinaryTextureLoader;
+	function BinaryTextureLoader( manager ) {
 
 		this.manager = ( manager !== undefined ) ? manager : DefaultLoadingManager;
 
@@ -29329,7 +29446,7 @@
 
 	}
 
-	Object.assign( DataTextureLoader.prototype, {
+	Object.assign( BinaryTextureLoader.prototype, {
 
 		load: function ( url, onLoad, onProgress, onError ) {
 
@@ -29416,63 +29533,48 @@
 
 		load: function ( url, onLoad, onProgress, onError ) {
 
-			if ( url === undefined ) url = '';
-
-			if ( this.path !== undefined ) url = this.path + url;
-
 			var scope = this;
 
-			var cached = Cache.get( url );
-
-			if ( cached !== undefined ) {
-
-				scope.manager.itemStart( url );
-
-				setTimeout( function () {
-
-					if ( onLoad ) onLoad( cached );
-
-					scope.manager.itemEnd( url );
-
-				}, 0 );
-
-				return cached;
-
-			}
-
 			var image = document.createElementNS( 'http://www.w3.org/1999/xhtml', 'img' );
+			image.onload = function () {
 
-			image.addEventListener( 'load', function () {
+				image.onload = null;
 
-				Cache.add( url, this );
+				URL.revokeObjectURL( image.src );
 
-				if ( onLoad ) onLoad( this );
+				if ( onLoad ) onLoad( image );
 
 				scope.manager.itemEnd( url );
 
-			}, false );
+			};
+			image.onerror = onError;
 
-			/*
-			image.addEventListener( 'progress', function ( event ) {
+			if ( url.indexOf( 'data:' ) === 0 ) {
 
-				if ( onProgress ) onProgress( event );
+				image.src = url;
 
-			}, false );
-			*/
+			} else if ( this.crossOrigin !== undefined ) {
 
-			image.addEventListener( 'error', function ( event ) {
+				// crossOrigin doesn't work with URL.createObjectURL()?
 
-				if ( onError ) onError( event );
+				image.crossOrigin = this.crossOrigin;
+				image.src = url;
 
-				scope.manager.itemError( url );
+			} else {
 
-			}, false );
+				var loader = new FileLoader();
+				loader.setPath( this.path );
+				loader.setResponseType( 'blob' );
+				loader.setWithCredentials( this.withCredentials );
+				loader.load( url, function ( blob ) {
 
-			if ( this.crossOrigin !== undefined ) image.crossOrigin = this.crossOrigin;
+					image.src = URL.createObjectURL( blob );
+
+				}, onProgress, onError );
+
+			}
 
 			scope.manager.itemStart( url );
-
-			image.src = url;
 
 			return image;
 
@@ -29481,6 +29583,13 @@
 		setCrossOrigin: function ( value ) {
 
 			this.crossOrigin = value;
+			return this;
+
+		},
+
+		setWithCredentials: function ( value ) {
+
+			this.withCredentials = value;
 			return this;
 
 		},
@@ -29580,6 +29689,7 @@
 
 			var loader = new ImageLoader( this.manager );
 			loader.setCrossOrigin( this.crossOrigin );
+			loader.setWithCredentials( this.withCredentials );
 			loader.setPath( this.path );
 			loader.load( url, function ( image ) {
 
@@ -29609,12 +29719,21 @@
 
 		},
 
+		setWithCredentials: function ( value ) {
+
+			this.withCredentials = value;
+			return this;
+
+		},
+
 		setPath: function ( value ) {
 
 			this.path = value;
 			return this;
 
 		}
+
+
 
 	} );
 
@@ -29924,7 +30043,7 @@
 	 * @author mrdoob / http://mrdoob.com/
 	 */
 
-	function DirectionalLightShadow( ) {
+	function DirectionalLightShadow( light ) {
 
 		LightShadow.call( this, new OrthographicCamera( - 5, 5, 5, - 5, 0.5, 500 ) );
 
@@ -32055,15 +32174,6 @@
 
 		createMaterial: ( function () {
 
-			var BlendingMode = {
-				NoBlending: NoBlending,
-				NormalBlending: NormalBlending,
-				AdditiveBlending: AdditiveBlending,
-				SubtractiveBlending: SubtractiveBlending,
-				MultiplyBlending: MultiplyBlending,
-				CustomBlending: CustomBlending
-			};
-
 			var color, textureLoader, materialLoader;
 
 			return function createMaterial( m, texturePath, crossOrigin ) {
@@ -32145,7 +32255,6 @@
 					var value = m[ name ];
 
 					switch ( name ) {
-
 						case 'DbgColor':
 						case 'DbgIndex':
 						case 'opticalDensity':
@@ -32291,7 +32400,6 @@
 						default:
 							console.error( 'THREE.Loader.createMaterial: Unsupported', name, value );
 							break;
-
 					}
 
 				}
@@ -32328,7 +32436,7 @@
 			for ( var i = 0, l = handlers.length; i < l; i += 2 ) {
 
 				var regex = handlers[ i ];
-				var loader = handlers[ i + 1 ];
+				var loader  = handlers[ i + 1 ];
 
 				if ( regex.test( file ) ) {
 
@@ -33263,32 +33371,6 @@
 
 		parseTextures: function ( json, images ) {
 
-			var TextureMapping = {
-				UVMapping: UVMapping,
-				CubeReflectionMapping: CubeReflectionMapping,
-				CubeRefractionMapping: CubeRefractionMapping,
-				EquirectangularReflectionMapping: EquirectangularReflectionMapping,
-				EquirectangularRefractionMapping: EquirectangularRefractionMapping,
-				SphericalReflectionMapping: SphericalReflectionMapping,
-				CubeUVReflectionMapping: CubeUVReflectionMapping,
-				CubeUVRefractionMapping: CubeUVRefractionMapping
-			};
-
-			var TextureWrapping = {
-				RepeatWrapping: RepeatWrapping,
-				ClampToEdgeWrapping: ClampToEdgeWrapping,
-				MirroredRepeatWrapping: MirroredRepeatWrapping
-			};
-
-			var TextureFilter = {
-				NearestFilter: NearestFilter,
-				NearestMipMapNearestFilter: NearestMipMapNearestFilter,
-				NearestMipMapLinearFilter: NearestMipMapLinearFilter,
-				LinearFilter: LinearFilter,
-				LinearMipMapNearestFilter: LinearMipMapNearestFilter,
-				LinearMipMapLinearFilter: LinearMipMapLinearFilter
-			};
-
 			function parseConstant( value, type ) {
 
 				if ( typeof( value ) === 'number' ) return value;
@@ -33602,86 +33684,6 @@
 
 	/**
 	 * @author zz85 / http://www.lab4games.net/zz85/blog
-	 *
-	 * Bezier Curves formulas obtained from
-	 * http://en.wikipedia.org/wiki/Bézier_curve
-	 */
-
-	function CatmullRom( t, p0, p1, p2, p3 ) {
-
-		var v0 = ( p2 - p0 ) * 0.5;
-		var v1 = ( p3 - p1 ) * 0.5;
-		var t2 = t * t;
-		var t3 = t * t2;
-		return ( 2 * p1 - 2 * p2 + v0 + v1 ) * t3 + ( - 3 * p1 + 3 * p2 - 2 * v0 - v1 ) * t2 + v0 * t + p1;
-
-	}
-
-	//
-
-	function QuadraticBezierP0( t, p ) {
-
-		var k = 1 - t;
-		return k * k * p;
-
-	}
-
-	function QuadraticBezierP1( t, p ) {
-
-		return 2 * ( 1 - t ) * t * p;
-
-	}
-
-	function QuadraticBezierP2( t, p ) {
-
-		return t * t * p;
-
-	}
-
-	function QuadraticBezier( t, p0, p1, p2 ) {
-
-		return QuadraticBezierP0( t, p0 ) + QuadraticBezierP1( t, p1 ) +
-			QuadraticBezierP2( t, p2 );
-
-	}
-
-	//
-
-	function CubicBezierP0( t, p ) {
-
-		var k = 1 - t;
-		return k * k * k * p;
-
-	}
-
-	function CubicBezierP1( t, p ) {
-
-		var k = 1 - t;
-		return 3 * k * k * t * p;
-
-	}
-
-	function CubicBezierP2( t, p ) {
-
-		return 3 * ( 1 - t ) * t * t * p;
-
-	}
-
-	function CubicBezierP3( t, p ) {
-
-		return t * t * t * p;
-
-	}
-
-	function CubicBezier( t, p0, p1, p2, p3 ) {
-
-		return CubicBezierP0( t, p0 ) + CubicBezierP1( t, p1 ) + CubicBezierP2( t, p2 ) +
-			CubicBezierP3( t, p3 );
-
-	}
-
-	/**
-	 * @author zz85 / http://www.lab4games.net/zz85/blog
 	 * Extensible curve object
 	 *
 	 * Some common of Curve methods
@@ -33705,7 +33707,7 @@
 	 * THREE.LineCurve3
 	 * THREE.QuadraticBezierCurve3
 	 * THREE.CubicBezierCurve3
-	 * THREE.CatmullRomCurve3
+	 * THREE.SplineCurve3
 	 *
 	 * A series of curves can be represented as a THREE.CurvePath
 	 *
@@ -34062,6 +34064,28 @@
 
 	};
 
+	// TODO: Transformation for Curves?
+
+	/**************************************************************
+	 *	3D Curves
+	 **************************************************************/
+
+	// A Factory method for creating new curve subclasses
+
+	Curve.create = function ( constructor, getPointFunc ) {
+
+		constructor.prototype = Object.create( Curve.prototype );
+		constructor.prototype.constructor = constructor;
+		constructor.prototype.getPoint = getPointFunc;
+
+		return constructor;
+
+	};
+
+	/**************************************************************
+	 *	Line
+	 **************************************************************/
+
 	function LineCurve( v1, v2 ) {
 
 		this.v1 = v1;
@@ -34097,7 +34121,7 @@
 
 	};
 
-	LineCurve.prototype.getTangent = function ( t ) {
+	LineCurve.prototype.getTangent = function( t ) {
 
 		var tangent = this.v2.clone().sub( this.v1 );
 
@@ -34339,6 +34363,10 @@
 
 	} );
 
+	/**************************************************************
+	 *	Ellipse curve
+	 **************************************************************/
+
 	function EllipseCurve( aX, aY, xRadius, yRadius, aStartAngle, aEndAngle, aClockwise, aRotation ) {
 
 		this.aX = aX;
@@ -34361,7 +34389,7 @@
 
 	EllipseCurve.prototype.isEllipseCurve = true;
 
-	EllipseCurve.prototype.getPoint = function ( t ) {
+	EllipseCurve.prototype.getPoint = function( t ) {
 
 		var twoPi = Math.PI * 2;
 		var deltaAngle = this.aEndAngle - this.aStartAngle;
@@ -34421,6 +34449,60 @@
 
 	};
 
+	/**
+	 * @author zz85 / http://www.lab4games.net/zz85/blog
+	 */
+
+	var CurveUtils = {
+
+		tangentQuadraticBezier: function ( t, p0, p1, p2 ) {
+
+			return 2 * ( 1 - t ) * ( p1 - p0 ) + 2 * t * ( p2 - p1 );
+
+		},
+
+		// Puay Bing, thanks for helping with this derivative!
+
+		tangentCubicBezier: function ( t, p0, p1, p2, p3 ) {
+
+			return - 3 * p0 * ( 1 - t ) * ( 1 - t )  +
+				3 * p1 * ( 1 - t ) * ( 1 - t ) - 6 * t * p1 * ( 1 - t ) +
+				6 * t *  p2 * ( 1 - t ) - 3 * t * t * p2 +
+				3 * t * t * p3;
+
+		},
+
+		tangentSpline: function ( t, p0, p1, p2, p3 ) {
+
+			// To check if my formulas are correct
+
+			var h00 = 6 * t * t - 6 * t; 	// derived from 2t^3 − 3t^2 + 1
+			var h10 = 3 * t * t - 4 * t + 1; // t^3 − 2t^2 + t
+			var h01 = - 6 * t * t + 6 * t; 	// − 2t3 + 3t2
+			var h11 = 3 * t * t - 2 * t;	// t3 − t2
+
+			return h00 + h10 + h01 + h11;
+
+		},
+
+		// Catmull-Rom
+
+		interpolate: function( p0, p1, p2, p3, t ) {
+
+			var v0 = ( p2 - p0 ) * 0.5;
+			var v1 = ( p3 - p1 ) * 0.5;
+			var t2 = t * t;
+			var t3 = t * t2;
+			return ( 2 * p1 - 2 * p2 + v0 + v1 ) * t3 + ( - 3 * p1 + 3 * p2 - 2 * v0 - v1 ) * t2 + v0 * t + p1;
+
+		}
+
+	};
+
+	/**************************************************************
+	 *	Spline curve
+	 **************************************************************/
+
 	function SplineCurve( points /* array of Vector2 */ ) {
 
 		this.points = ( points === undefined ) ? [] : points;
@@ -34445,12 +34527,18 @@
 		var point2 = points[ intPoint > points.length - 2 ? points.length - 1 : intPoint + 1 ];
 		var point3 = points[ intPoint > points.length - 3 ? points.length - 1 : intPoint + 2 ];
 
+		var interpolate = CurveUtils.interpolate;
+
 		return new Vector2(
-			CatmullRom( weight, point0.x, point1.x, point2.x, point3.x ),
-			CatmullRom( weight, point0.y, point1.y, point2.y, point3.y )
+			interpolate( point0.x, point1.x, point2.x, point3.x, weight ),
+			interpolate( point0.y, point1.y, point2.y, point3.y, weight )
 		);
 
 	};
+
+	/**************************************************************
+	 *	Cubic Bezier curve
+	 **************************************************************/
 
 	function CubicBezierCurve( v0, v1, v2, v3 ) {
 
@@ -34466,14 +34554,30 @@
 
 	CubicBezierCurve.prototype.getPoint = function ( t ) {
 
-		var v0 = this.v0, v1 = this.v1, v2 = this.v2, v3 = this.v3;
+		var b3 = ShapeUtils.b3;
 
 		return new Vector2(
-			CubicBezier( t, v0.x, v1.x, v2.x, v3.x ),
-			CubicBezier( t, v0.y, v1.y, v2.y, v3.y )
+			b3( t, this.v0.x, this.v1.x, this.v2.x, this.v3.x ),
+			b3( t, this.v0.y, this.v1.y, this.v2.y, this.v3.y )
 		);
 
 	};
+
+	CubicBezierCurve.prototype.getTangent = function( t ) {
+
+		var tangentCubicBezier = CurveUtils.tangentCubicBezier;
+
+		return new Vector2(
+			tangentCubicBezier( t, this.v0.x, this.v1.x, this.v2.x, this.v3.x ),
+			tangentCubicBezier( t, this.v0.y, this.v1.y, this.v2.y, this.v3.y )
+		).normalize();
+
+	};
+
+	/**************************************************************
+	 *	Quadratic Bezier curve
+	 **************************************************************/
+
 
 	function QuadraticBezierCurve( v0, v1, v2 ) {
 
@@ -34486,14 +34590,27 @@
 	QuadraticBezierCurve.prototype = Object.create( Curve.prototype );
 	QuadraticBezierCurve.prototype.constructor = QuadraticBezierCurve;
 
+
 	QuadraticBezierCurve.prototype.getPoint = function ( t ) {
 
-		var v0 = this.v0, v1 = this.v1, v2 = this.v2;
+		var b2 = ShapeUtils.b2;
 
 		return new Vector2(
-			QuadraticBezier( t, v0.x, v1.x, v2.x ),
-			QuadraticBezier( t, v0.y, v1.y, v2.y )
+			b2( t, this.v0.x, this.v1.x, this.v2.x ),
+			b2( t, this.v0.y, this.v1.y, this.v2.y )
 		);
+
+	};
+
+
+	QuadraticBezierCurve.prototype.getTangent = function( t ) {
+
+		var tangentQuadraticBezier = CurveUtils.tangentQuadraticBezier;
+
+		return new Vector2(
+			tangentQuadraticBezier( t, this.v0.x, this.v1.x, this.v2.x ),
+			tangentQuadraticBezier( t, this.v0.y, this.v1.y, this.v2.y )
+		).normalize();
 
 	};
 
@@ -34619,27 +34736,6 @@
 
 	/**
 	 * @author zz85 / http://www.lab4games.net/zz85/blog
-	 * Creates free form 2d path using series of points, lines or curves.
-	 **/
-
-	function Path( points ) {
-
-		CurvePath.call( this );
-		this.currentPoint = new Vector2();
-
-		if ( points ) {
-
-			this.fromPoints( points );
-
-		}
-
-	}
-
-	Path.prototype = PathPrototype;
-	PathPrototype.constructor = Path;
-
-	/**
-	 * @author zz85 / http://www.lab4games.net/zz85/blog
 	 * Defines a 2d shape plane using paths.
 	 **/
 
@@ -34698,48 +34794,50 @@
 
 	/**
 	 * @author zz85 / http://www.lab4games.net/zz85/blog
-	 * minimal class for proxing functions to Path. Replaces old "extractSubpaths()"
+	 * Creates free form 2d path using series of points, lines or curves.
+	 *
 	 **/
 
-	function ShapePath() {
+	function Path( points ) {
 
-		this.subPaths = [];
-		this.currentPath = null;
+		CurvePath.call( this );
+		this.currentPoint = new Vector2();
+
+		if ( points ) {
+
+			this.fromPoints( points );
+
+		}
 
 	}
 
+	Path.prototype = PathPrototype;
+	PathPrototype.constructor = Path;
+
+
+	// minimal class for proxing functions to Path. Replaces old "extractSubpaths()"
+	function ShapePath() {
+		this.subPaths = [];
+		this.currentPath = null;
+	}
+
 	ShapePath.prototype = {
-
 		moveTo: function ( x, y ) {
-
 			this.currentPath = new Path();
-			this.subPaths.push( this.currentPath );
+			this.subPaths.push(this.currentPath);
 			this.currentPath.moveTo( x, y );
-
 		},
-
 		lineTo: function ( x, y ) {
-
 			this.currentPath.lineTo( x, y );
-
 		},
-
 		quadraticCurveTo: function ( aCPx, aCPy, aX, aY ) {
-
 			this.currentPath.quadraticCurveTo( aCPx, aCPy, aX, aY );
-
 		},
-
 		bezierCurveTo: function ( aCP1x, aCP1y, aCP2x, aCP2y, aX, aY ) {
-
 			this.currentPath.bezierCurveTo( aCP1x, aCP1y, aCP2x, aCP2y, aX, aY );
-
 		},
-
 		splineThru: function ( pts ) {
-
 			this.currentPath.splineThru( pts );
-
 		},
 
 		toShapes: function ( isCCW, noHoles ) {
@@ -34968,7 +35066,6 @@
 			return shapes;
 
 		}
-
 	};
 
 	/**
@@ -35017,7 +35114,7 @@
 
 				var path = new ShapePath();
 
-				var pts = [];
+				var pts = [], b2 = ShapeUtils.b2, b3 = ShapeUtils.b3;
 				var x, y, cpx, cpy, cpx0, cpy0, cpx1, cpy1, cpx2, cpy2, laste;
 
 				if ( glyph.o ) {
@@ -35067,8 +35164,8 @@
 									for ( var i2 = 1; i2 <= divisions; i2 ++ ) {
 
 										var t = i2 / divisions;
-										QuadraticBezier( t, cpx0, cpx1, cpx );
-										QuadraticBezier( t, cpy0, cpy1, cpy );
+										b2( t, cpx0, cpx1, cpx );
+										b2( t, cpy0, cpy1, cpy );
 
 									}
 
@@ -35097,8 +35194,8 @@
 									for ( var i2 = 1; i2 <= divisions; i2 ++ ) {
 
 										var t = i2 / divisions;
-										CubicBezier( t, cpx0, cpx1, cpx2, cpx );
-										CubicBezier( t, cpy0, cpy1, cpy2, cpy );
+										b3( t, cpx0, cpx1, cpx2, cpx );
+										b3( t, cpy0, cpy1, cpy2, cpy );
 
 									}
 
@@ -37925,14 +38022,12 @@
 
 	}
 
-	AnimationMixer.prototype = {
-
-		constructor: AnimationMixer,
+	Object.assign( AnimationMixer.prototype, EventDispatcher.prototype, {
 
 		// return an action for a clip optionally using a custom root target
 		// object (this method allocates a lot of dynamic memory in case a
 		// previously unknown clip/root combination is specified)
-		clipAction: function ( clip, optionalRoot ) {
+		clipAction: function( clip, optionalRoot ) {
 
 			var root = optionalRoot || this._root,
 				rootUuid = root.uuid,
@@ -37982,7 +38077,7 @@
 		},
 
 		// get an existing action
-		existingAction: function ( clip, optionalRoot ) {
+		existingAction: function( clip, optionalRoot ) {
 
 			var root = optionalRoot || this._root,
 				rootUuid = root.uuid,
@@ -38005,7 +38100,7 @@
 		},
 
 		// deactivates all previously scheduled actions
-		stopAllAction: function () {
+		stopAllAction: function() {
 
 			var actions = this._actions,
 				nActions = this._nActiveActions,
@@ -38032,7 +38127,7 @@
 		},
 
 		// advance the time and update apply the animation
-		update: function ( deltaTime ) {
+		update: function( deltaTime ) {
 
 			deltaTime *= this.timeScale;
 
@@ -38074,14 +38169,14 @@
 		},
 
 		// return this mixer's root target object
-		getRoot: function () {
+		getRoot: function() {
 
 			return this._root;
 
 		},
 
 		// free all resources specific to a particular clip
-		uncacheClip: function ( clip ) {
+		uncacheClip: function( clip ) {
 
 			var actions = this._actions,
 				clipUuid = clip.uuid,
@@ -38123,7 +38218,7 @@
 		},
 
 		// free all resources specific to a particular root target object
-		uncacheRoot: function ( root ) {
+		uncacheRoot: function( root ) {
 
 			var rootUuid = root.uuid,
 				actionsByClip = this._actionsByClip;
@@ -38160,7 +38255,7 @@
 		},
 
 		// remove a targeted clip from the cache
-		uncacheAction: function ( clip, optionalRoot ) {
+		uncacheAction: function( clip, optionalRoot ) {
 
 			var action = this.existingAction( clip, optionalRoot );
 
@@ -38173,13 +38268,13 @@
 
 		}
 
-	};
+	} );
 
 	// Implementation details:
 
 	Object.assign( AnimationMixer.prototype, {
 
-		_bindAction: function ( action, prototypeAction ) {
+		_bindAction: function( action, prototypeAction ) {
 
 			var root = action._localRoot || this._root,
 				tracks = action._clip.tracks,
@@ -38246,7 +38341,7 @@
 
 		},
 
-		_activateAction: function ( action ) {
+		_activateAction: function( action ) {
 
 			if ( ! this._isActiveAction( action ) ) {
 
@@ -38288,7 +38383,7 @@
 
 		},
 
-		_deactivateAction: function ( action ) {
+		_deactivateAction: function( action ) {
 
 			if ( this._isActiveAction( action ) ) {
 
@@ -38316,7 +38411,7 @@
 
 		// Memory manager
 
-		_initMemoryManager: function () {
+		_initMemoryManager: function() {
 
 			this._actions = []; // 'nActiveActions' followed by inactive ones
 			this._nActiveActions = 0;
@@ -38361,14 +38456,14 @@
 
 		// Memory management for AnimationAction objects
 
-		_isActiveAction: function ( action ) {
+		_isActiveAction: function( action ) {
 
 			var index = action._cacheIndex;
 			return index !== null && index < this._nActiveActions;
 
 		},
 
-		_addInactiveAction: function ( action, clipUuid, rootUuid ) {
+		_addInactiveAction: function( action, clipUuid, rootUuid ) {
 
 			var actions = this._actions,
 				actionsByClip = this._actionsByClip,
@@ -38403,7 +38498,7 @@
 
 		},
 
-		_removeInactiveAction: function ( action ) {
+		_removeInactiveAction: function( action ) {
 
 			var actions = this._actions,
 				lastInactiveAction = actions[ actions.length - 1 ],
@@ -38448,7 +38543,7 @@
 
 		},
 
-		_removeInactiveBindingsForAction: function ( action ) {
+		_removeInactiveBindingsForAction: function( action ) {
 
 			var bindings = action._propertyBindings;
 			for ( var i = 0, n = bindings.length; i !== n; ++ i ) {
@@ -38465,7 +38560,7 @@
 
 		},
 
-		_lendAction: function ( action ) {
+		_lendAction: function( action ) {
 
 			// [ active actions |  inactive actions  ]
 			// [  active actions >| inactive actions ]
@@ -38488,7 +38583,7 @@
 
 		},
 
-		_takeBackAction: function ( action ) {
+		_takeBackAction: function( action ) {
 
 			// [  active actions  | inactive actions ]
 			// [ active actions |< inactive actions  ]
@@ -38513,7 +38608,7 @@
 
 		// Memory management for PropertyMixer objects
 
-		_addInactiveBinding: function ( binding, rootUuid, trackName ) {
+		_addInactiveBinding: function( binding, rootUuid, trackName ) {
 
 			var bindingsByRoot = this._bindingsByRootAndName,
 				bindingByName = bindingsByRoot[ rootUuid ],
@@ -38534,7 +38629,7 @@
 
 		},
 
-		_removeInactiveBinding: function ( binding ) {
+		_removeInactiveBinding: function( binding ) {
 
 			var bindings = this._bindings,
 				propBinding = binding.binding,
@@ -38562,7 +38657,7 @@
 
 		},
 
-		_lendBinding: function ( binding ) {
+		_lendBinding: function( binding ) {
 
 			var bindings = this._bindings,
 				prevIndex = binding._cacheIndex,
@@ -38579,7 +38674,7 @@
 
 		},
 
-		_takeBackBinding: function ( binding ) {
+		_takeBackBinding: function( binding ) {
 
 			var bindings = this._bindings,
 				prevIndex = binding._cacheIndex,
@@ -38599,7 +38694,7 @@
 
 		// Memory management of Interpolants for weight and time scale
 
-		_lendControlInterpolant: function () {
+		_lendControlInterpolant: function() {
 
 			var interpolants = this._controlInterpolants,
 				lastActiveIndex = this._nActiveControlInterpolants ++,
@@ -38620,7 +38715,7 @@
 
 		},
 
-		_takeBackControlInterpolant: function ( interpolant ) {
+		_takeBackControlInterpolant: function( interpolant ) {
 
 			var interpolants = this._controlInterpolants,
 				prevIndex = interpolant.__cacheIndex,
@@ -38640,8 +38735,6 @@
 		_controlInterpolantsResultBuffer: new Float32Array( 1 )
 
 	} );
-
-	Object.assign( AnimationMixer.prototype, EventDispatcher.prototype );
 
 	/**
 	 * @author mrdoob / http://mrdoob.com/
@@ -39219,6 +39312,183 @@
 		}
 
 	};
+
+	/**
+	 * Spline from Tween.js, slightly optimized (and trashed)
+	 * http://sole.github.com/tween.js/examples/05_spline.html
+	 *
+	 * @author mrdoob / http://mrdoob.com/
+	 * @author alteredq / http://alteredqualia.com/
+	 */
+
+	function Spline( points ) {
+
+		this.points = points;
+
+		var c = [], v3 = { x: 0, y: 0, z: 0 },
+		point, intPoint, weight, w2, w3,
+		pa, pb, pc, pd;
+
+		this.initFromArray = function ( a ) {
+
+			this.points = [];
+
+			for ( var i = 0; i < a.length; i ++ ) {
+
+				this.points[ i ] = { x: a[ i ][ 0 ], y: a[ i ][ 1 ], z: a[ i ][ 2 ] };
+
+			}
+
+		};
+
+		this.getPoint = function ( k ) {
+
+			point = ( this.points.length - 1 ) * k;
+			intPoint = Math.floor( point );
+			weight = point - intPoint;
+
+			c[ 0 ] = intPoint === 0 ? intPoint : intPoint - 1;
+			c[ 1 ] = intPoint;
+			c[ 2 ] = intPoint  > this.points.length - 2 ? this.points.length - 1 : intPoint + 1;
+			c[ 3 ] = intPoint  > this.points.length - 3 ? this.points.length - 1 : intPoint + 2;
+
+			pa = this.points[ c[ 0 ] ];
+			pb = this.points[ c[ 1 ] ];
+			pc = this.points[ c[ 2 ] ];
+			pd = this.points[ c[ 3 ] ];
+
+			w2 = weight * weight;
+			w3 = weight * w2;
+
+			v3.x = interpolate( pa.x, pb.x, pc.x, pd.x, weight, w2, w3 );
+			v3.y = interpolate( pa.y, pb.y, pc.y, pd.y, weight, w2, w3 );
+			v3.z = interpolate( pa.z, pb.z, pc.z, pd.z, weight, w2, w3 );
+
+			return v3;
+
+		};
+
+		this.getControlPointsArray = function () {
+
+			var i, p, l = this.points.length,
+				coords = [];
+
+			for ( i = 0; i < l; i ++ ) {
+
+				p = this.points[ i ];
+				coords[ i ] = [ p.x, p.y, p.z ];
+
+			}
+
+			return coords;
+
+		};
+
+		// approximate length by summing linear segments
+
+		this.getLength = function ( nSubDivisions ) {
+
+			var i, index, nSamples, position,
+				point = 0, intPoint = 0, oldIntPoint = 0,
+				oldPosition = new Vector3(),
+				tmpVec = new Vector3(),
+				chunkLengths = [],
+				totalLength = 0;
+
+			// first point has 0 length
+
+			chunkLengths[ 0 ] = 0;
+
+			if ( ! nSubDivisions ) nSubDivisions = 100;
+
+			nSamples = this.points.length * nSubDivisions;
+
+			oldPosition.copy( this.points[ 0 ] );
+
+			for ( i = 1; i < nSamples; i ++ ) {
+
+				index = i / nSamples;
+
+				position = this.getPoint( index );
+				tmpVec.copy( position );
+
+				totalLength += tmpVec.distanceTo( oldPosition );
+
+				oldPosition.copy( position );
+
+				point = ( this.points.length - 1 ) * index;
+				intPoint = Math.floor( point );
+
+				if ( intPoint !== oldIntPoint ) {
+
+					chunkLengths[ intPoint ] = totalLength;
+					oldIntPoint = intPoint;
+
+				}
+
+			}
+
+			// last point ends with total length
+
+			chunkLengths[ chunkLengths.length ] = totalLength;
+
+			return { chunks: chunkLengths, total: totalLength };
+
+		};
+
+		this.reparametrizeByArcLength = function ( samplingCoef ) {
+
+			var i, j,
+				index, indexCurrent, indexNext,
+				realDistance,
+				sampling, position,
+				newpoints = [],
+				tmpVec = new Vector3(),
+				sl = this.getLength();
+
+			newpoints.push( tmpVec.copy( this.points[ 0 ] ).clone() );
+
+			for ( i = 1; i < this.points.length; i ++ ) {
+
+				//tmpVec.copy( this.points[ i - 1 ] );
+				//linearDistance = tmpVec.distanceTo( this.points[ i ] );
+
+				realDistance = sl.chunks[ i ] - sl.chunks[ i - 1 ];
+
+				sampling = Math.ceil( samplingCoef * realDistance / sl.total );
+
+				indexCurrent = ( i - 1 ) / ( this.points.length - 1 );
+				indexNext = i / ( this.points.length - 1 );
+
+				for ( j = 1; j < sampling - 1; j ++ ) {
+
+					index = indexCurrent + j * ( 1 / sampling ) * ( indexNext - indexCurrent );
+
+					position = this.getPoint( index );
+					newpoints.push( tmpVec.copy( position ).clone() );
+
+				}
+
+				newpoints.push( tmpVec.copy( this.points[ i ] ).clone() );
+
+			}
+
+			this.points = newpoints;
+
+		};
+
+		// Catmull-Rom
+
+		function interpolate( p0, p1, p2, p3, t, t2, t3 ) {
+
+			var v0 = ( p2 - p0 ) * 0.5,
+				v1 = ( p3 - p1 ) * 0.5;
+
+			return ( 2 * ( p1 - p2 ) + v0 + v1 ) * t3 + ( - 3 * ( p1 - p2 ) - 2 * v0 - v1 ) * t2 + v0 * t + p1;
+
+		}
+
+	}
 
 	/**
 	 * @author bhouston / http://clara.io
@@ -41043,20 +41313,25 @@
 	 * curve.tension is used for catmullrom which defaults to 0.5
 	 */
 
+	var CatmullRomCurve3 = ( function() {
 
-	/*
-	Based on an optimized c++ solution in
-	 - http://stackoverflow.com/questions/9489736/catmull-rom-curve-with-no-cusps-and-no-self-intersections/
-	 - http://ideone.com/NoEbVM
+		var
+			tmp = new Vector3(),
+			px = new CubicPoly(),
+			py = new CubicPoly(),
+			pz = new CubicPoly();
 
-	This CubicPoly class could be used for reusing some variables and calculations,
-	but for three.js curve use, it could be possible inlined and flatten into a single function call
-	which can be placed in CurveUtils.
-	*/
+		/*
+		Based on an optimized c++ solution in
+		 - http://stackoverflow.com/questions/9489736/catmull-rom-curve-with-no-cusps-and-no-self-intersections/
+		 - http://ideone.com/NoEbVM
 
-	function CubicPoly() {
+		This CubicPoly class could be used for reusing some variables and calculations,
+		but for three.js curve use, it could be possible inlined and flatten into a single function call
+		which can be placed in CurveUtils.
+		*/
 
-		var c0 = 0, c1 = 0, c2 = 0, c3 = 0;
+		function CubicPoly() {}
 
 		/*
 		 * Compute coefficients for a cubic polynomial
@@ -41066,221 +41341,280 @@
 		 *  and
 		 *   p'(0) = t0, p'(1) = t1.
 		 */
-		function init( x0, x1, t0, t1 ) {
+		CubicPoly.prototype.init = function( x0, x1, t0, t1 ) {
 
-			c0 = x0;
-			c1 = t0;
-			c2 = - 3 * x0 + 3 * x1 - 2 * t0 - t1;
-			c3 = 2 * x0 - 2 * x1 + t0 + t1;
-
-		}
-
-		return {
-
-			initCatmullRom: function ( x0, x1, x2, x3, tension ) {
-
-				init( x1, x2, tension * ( x2 - x0 ), tension * ( x3 - x1 ) );
-
-			},
-
-			initNonuniformCatmullRom: function ( x0, x1, x2, x3, dt0, dt1, dt2 ) {
-
-				// compute tangents when parameterized in [t1,t2]
-				var t1 = ( x1 - x0 ) / dt0 - ( x2 - x0 ) / ( dt0 + dt1 ) + ( x2 - x1 ) / dt1;
-				var t2 = ( x2 - x1 ) / dt1 - ( x3 - x1 ) / ( dt1 + dt2 ) + ( x3 - x2 ) / dt2;
-
-				// rescale tangents for parametrization in [0,1]
-				t1 *= dt1;
-				t2 *= dt1;
-
-				init( x1, x2, t1, t2 );
-
-			},
-
-			calc: function ( t ) {
-
-				var t2 = t * t;
-				var t3 = t2 * t;
-				return c0 + c1 * t + c2 * t2 + c3 * t3;
-
-			}
+			this.c0 = x0;
+			this.c1 = t0;
+			this.c2 = - 3 * x0 + 3 * x1 - 2 * t0 - t1;
+			this.c3 = 2 * x0 - 2 * x1 + t0 + t1;
 
 		};
 
-	}
+		CubicPoly.prototype.initNonuniformCatmullRom = function( x0, x1, x2, x3, dt0, dt1, dt2 ) {
 
-	//
+			// compute tangents when parameterized in [t1,t2]
+			var t1 = ( x1 - x0 ) / dt0 - ( x2 - x0 ) / ( dt0 + dt1 ) + ( x2 - x1 ) / dt1;
+			var t2 = ( x2 - x1 ) / dt1 - ( x3 - x1 ) / ( dt1 + dt2 ) + ( x3 - x2 ) / dt2;
 
-	var tmp = new Vector3();
-	var px = new CubicPoly();
-	var py = new CubicPoly();
-	var pz = new CubicPoly();
+			// rescale tangents for parametrization in [0,1]
+			t1 *= dt1;
+			t2 *= dt1;
 
-	function CatmullRomCurve3( p /* array of Vector3 */ ) {
+			// initCubicPoly
+			this.init( x1, x2, t1, t2 );
 
-		this.points = p || [];
-		this.closed = false;
+		};
 
-	}
+		// standard Catmull-Rom spline: interpolate between x1 and x2 with previous/following points x1/x4
+		CubicPoly.prototype.initCatmullRom = function( x0, x1, x2, x3, tension ) {
 
-	CatmullRomCurve3.prototype = Object.create( Curve.prototype );
-	CatmullRomCurve3.prototype.constructor = CatmullRomCurve3;
+			this.init( x1, x2, tension * ( x2 - x0 ), tension * ( x3 - x1 ) );
 
-	CatmullRomCurve3.prototype.getPoint = function ( t ) {
+		};
 
-		var points = this.points;
-		var l = points.length;
+		CubicPoly.prototype.calc = function( t ) {
 
-		if ( l < 2 ) console.log( 'duh, you need at least 2 points' );
+			var t2 = t * t;
+			var t3 = t2 * t;
+			return this.c0 + this.c1 * t + this.c2 * t2 + this.c3 * t3;
 
-		var point = ( l - ( this.closed ? 0 : 1 ) ) * t;
-		var intPoint = Math.floor( point );
-		var weight = point - intPoint;
+		};
 
-		if ( this.closed ) {
+		// Subclass Three.js curve
+		return Curve.create(
 
-			intPoint += intPoint > 0 ? 0 : ( Math.floor( Math.abs( intPoint ) / points.length ) + 1 ) * points.length;
+			function ( p /* array of Vector3 */ ) {
 
-		} else if ( weight === 0 && intPoint === l - 1 ) {
+				this.points = p || [];
+				this.closed = false;
 
-			intPoint = l - 2;
-			weight = 1;
+			},
 
-		}
+			function ( t ) {
 
-		var p0, p1, p2, p3; // 4 points
+				var points = this.points,
+					point, intPoint, weight, l;
 
-		if ( this.closed || intPoint > 0 ) {
+				l = points.length;
 
-			p0 = points[ ( intPoint - 1 ) % l ];
+				if ( l < 2 ) console.log( 'duh, you need at least 2 points' );
 
-		} else {
+				point = ( l - ( this.closed ? 0 : 1 ) ) * t;
+				intPoint = Math.floor( point );
+				weight = point - intPoint;
 
-			// extrapolate first point
-			tmp.subVectors( points[ 0 ], points[ 1 ] ).add( points[ 0 ] );
-			p0 = tmp;
+				if ( this.closed ) {
 
-		}
+					intPoint += intPoint > 0 ? 0 : ( Math.floor( Math.abs( intPoint ) / points.length ) + 1 ) * points.length;
 
-		p1 = points[ intPoint % l ];
-		p2 = points[ ( intPoint + 1 ) % l ];
+				} else if ( weight === 0 && intPoint === l - 1 ) {
 
-		if ( this.closed || intPoint + 2 < l ) {
+					intPoint = l - 2;
+					weight = 1;
 
-			p3 = points[ ( intPoint + 2 ) % l ];
+				}
 
-		} else {
+				var p0, p1, p2, p3; // 4 points
 
-			// extrapolate last point
-			tmp.subVectors( points[ l - 1 ], points[ l - 2 ] ).add( points[ l - 1 ] );
-			p3 = tmp;
+				if ( this.closed || intPoint > 0 ) {
 
-		}
+					p0 = points[ ( intPoint - 1 ) % l ];
 
-		if ( this.type === undefined || this.type === 'centripetal' || this.type === 'chordal' ) {
+				} else {
 
-			// init Centripetal / Chordal Catmull-Rom
-			var pow = this.type === 'chordal' ? 0.5 : 0.25;
-			var dt0 = Math.pow( p0.distanceToSquared( p1 ), pow );
-			var dt1 = Math.pow( p1.distanceToSquared( p2 ), pow );
-			var dt2 = Math.pow( p2.distanceToSquared( p3 ), pow );
+					// extrapolate first point
+					tmp.subVectors( points[ 0 ], points[ 1 ] ).add( points[ 0 ] );
+					p0 = tmp;
 
-			// safety check for repeated points
-			if ( dt1 < 1e-4 ) dt1 = 1.0;
-			if ( dt0 < 1e-4 ) dt0 = dt1;
-			if ( dt2 < 1e-4 ) dt2 = dt1;
+				}
 
-			px.initNonuniformCatmullRom( p0.x, p1.x, p2.x, p3.x, dt0, dt1, dt2 );
-			py.initNonuniformCatmullRom( p0.y, p1.y, p2.y, p3.y, dt0, dt1, dt2 );
-			pz.initNonuniformCatmullRom( p0.z, p1.z, p2.z, p3.z, dt0, dt1, dt2 );
+				p1 = points[ intPoint % l ];
+				p2 = points[ ( intPoint + 1 ) % l ];
 
-		} else if ( this.type === 'catmullrom' ) {
+				if ( this.closed || intPoint + 2 < l ) {
 
-			var tension = this.tension !== undefined ? this.tension : 0.5;
-			px.initCatmullRom( p0.x, p1.x, p2.x, p3.x, tension );
-			py.initCatmullRom( p0.y, p1.y, p2.y, p3.y, tension );
-			pz.initCatmullRom( p0.z, p1.z, p2.z, p3.z, tension );
+					p3 = points[ ( intPoint + 2 ) % l ];
 
-		}
+				} else {
 
-		return new Vector3( px.calc( weight ), py.calc( weight ), pz.calc( weight ) );
+					// extrapolate last point
+					tmp.subVectors( points[ l - 1 ], points[ l - 2 ] ).add( points[ l - 1 ] );
+					p3 = tmp;
 
-	};
+				}
 
-	function CubicBezierCurve3( v0, v1, v2, v3 ) {
+				if ( this.type === undefined || this.type === 'centripetal' || this.type === 'chordal' ) {
 
-		this.v0 = v0;
-		this.v1 = v1;
-		this.v2 = v2;
-		this.v3 = v3;
+					// init Centripetal / Chordal Catmull-Rom
+					var pow = this.type === 'chordal' ? 0.5 : 0.25;
+					var dt0 = Math.pow( p0.distanceToSquared( p1 ), pow );
+					var dt1 = Math.pow( p1.distanceToSquared( p2 ), pow );
+					var dt2 = Math.pow( p2.distanceToSquared( p3 ), pow );
 
-	}
+					// safety check for repeated points
+					if ( dt1 < 1e-4 ) dt1 = 1.0;
+					if ( dt0 < 1e-4 ) dt0 = dt1;
+					if ( dt2 < 1e-4 ) dt2 = dt1;
 
-	CubicBezierCurve3.prototype = Object.create( Curve.prototype );
-	CubicBezierCurve3.prototype.constructor = CubicBezierCurve3;
+					px.initNonuniformCatmullRom( p0.x, p1.x, p2.x, p3.x, dt0, dt1, dt2 );
+					py.initNonuniformCatmullRom( p0.y, p1.y, p2.y, p3.y, dt0, dt1, dt2 );
+					pz.initNonuniformCatmullRom( p0.z, p1.z, p2.z, p3.z, dt0, dt1, dt2 );
 
-	CubicBezierCurve3.prototype.getPoint = function ( t ) {
+				} else if ( this.type === 'catmullrom' ) {
 
-		var v0 = this.v0, v1 = this.v1, v2 = this.v2, v3 = this.v3;
+					var tension = this.tension !== undefined ? this.tension : 0.5;
+					px.initCatmullRom( p0.x, p1.x, p2.x, p3.x, tension );
+					py.initCatmullRom( p0.y, p1.y, p2.y, p3.y, tension );
+					pz.initCatmullRom( p0.z, p1.z, p2.z, p3.z, tension );
 
-		return new Vector3(
-			CubicBezier( t, v0.x, v1.x, v2.x, v3.x ),
-			CubicBezier( t, v0.y, v1.y, v2.y, v3.y ),
-			CubicBezier( t, v0.z, v1.z, v2.z, v3.z )
+				}
+
+				var v = new Vector3(
+					px.calc( weight ),
+					py.calc( weight ),
+					pz.calc( weight )
+				);
+
+				return v;
+
+			}
+
 		);
 
-	};
+	} )();
 
-	function QuadraticBezierCurve3( v0, v1, v2 ) {
+	/**************************************************************
+	 *	Spline 3D curve
+	 **************************************************************/
 
-		this.v0 = v0;
-		this.v1 = v1;
-		this.v2 = v2;
 
-	}
+	var SplineCurve3 = Curve.create(
 
-	QuadraticBezierCurve3.prototype = Object.create( Curve.prototype );
-	QuadraticBezierCurve3.prototype.constructor = QuadraticBezierCurve3;
+		function ( points /* array of Vector3 */ ) {
 
-	QuadraticBezierCurve3.prototype.getPoint = function ( t ) {
+			console.warn( 'THREE.SplineCurve3 will be deprecated. Please use THREE.CatmullRomCurve3' );
+			this.points = ( points === undefined ) ? [] : points;
 
-		var v0 = this.v0, v1 = this.v1, v2 = this.v2;
+		},
 
-		return new Vector3(
-			QuadraticBezier( t, v0.x, v1.x, v2.x ),
-			QuadraticBezier( t, v0.y, v1.y, v2.y ),
-			QuadraticBezier( t, v0.z, v1.z, v2.z )
-		);
+		function ( t ) {
 
-	};
+			var points = this.points;
+			var point = ( points.length - 1 ) * t;
 
-	function LineCurve3( v1, v2 ) {
+			var intPoint = Math.floor( point );
+			var weight = point - intPoint;
 
-		this.v1 = v1;
-		this.v2 = v2;
+			var point0 = points[ intPoint == 0 ? intPoint : intPoint - 1 ];
+			var point1 = points[ intPoint ];
+			var point2 = points[ intPoint > points.length - 2 ? points.length - 1 : intPoint + 1 ];
+			var point3 = points[ intPoint > points.length - 3 ? points.length - 1 : intPoint + 2 ];
 
-	}
+			var interpolate = CurveUtils.interpolate;
 
-	LineCurve3.prototype = Object.create( Curve.prototype );
-	LineCurve3.prototype.constructor = LineCurve3;
-
-	LineCurve3.prototype.getPoint = function ( t ) {
-
-		if ( t === 1 ) {
-
-			return this.v2.clone();
+			return new Vector3(
+				interpolate( point0.x, point1.x, point2.x, point3.x, weight ),
+				interpolate( point0.y, point1.y, point2.y, point3.y, weight ),
+				interpolate( point0.z, point1.z, point2.z, point3.z, weight )
+			);
 
 		}
 
-		var vector = new Vector3();
+	);
 
-		vector.subVectors( this.v2, this.v1 ); // diff
-		vector.multiplyScalar( t );
-		vector.add( this.v1 );
+	/**************************************************************
+	 *	Cubic Bezier 3D curve
+	 **************************************************************/
 
-		return vector;
+	var CubicBezierCurve3 = Curve.create(
 
-	};
+		function ( v0, v1, v2, v3 ) {
+
+			this.v0 = v0;
+			this.v1 = v1;
+			this.v2 = v2;
+			this.v3 = v3;
+
+		},
+
+		function ( t ) {
+
+			var b3 = ShapeUtils.b3;
+
+			return new Vector3(
+				b3( t, this.v0.x, this.v1.x, this.v2.x, this.v3.x ),
+				b3( t, this.v0.y, this.v1.y, this.v2.y, this.v3.y ),
+				b3( t, this.v0.z, this.v1.z, this.v2.z, this.v3.z )
+			);
+
+		}
+
+	);
+
+	/**************************************************************
+	 *	Quadratic Bezier 3D curve
+	 **************************************************************/
+
+	var QuadraticBezierCurve3 = Curve.create(
+
+		function ( v0, v1, v2 ) {
+
+			this.v0 = v0;
+			this.v1 = v1;
+			this.v2 = v2;
+
+		},
+
+		function ( t ) {
+
+			var b2 = ShapeUtils.b2;
+
+			return new Vector3(
+				b2( t, this.v0.x, this.v1.x, this.v2.x ),
+				b2( t, this.v0.y, this.v1.y, this.v2.y ),
+				b2( t, this.v0.z, this.v1.z, this.v2.z )
+			);
+
+		}
+
+	);
+
+	/**************************************************************
+	 *	Line3D
+	 **************************************************************/
+
+	var LineCurve3 = Curve.create(
+
+		function ( v1, v2 ) {
+
+			this.v1 = v1;
+			this.v2 = v2;
+
+		},
+
+		function ( t ) {
+
+			if ( t === 1 ) {
+
+				return this.v2.clone();
+
+			}
+
+			var vector = new Vector3();
+
+			vector.subVectors( this.v2, this.v1 ); // diff
+			vector.multiplyScalar( t );
+			vector.add( this.v1 );
+
+			return vector;
+
+		}
+
+	);
+
+	/**************************************************************
+	 *	Arc curve
+	 **************************************************************/
 
 	function ArcCurve( aX, aY, aRadius, aStartAngle, aEndAngle, aClockwise ) {
 
@@ -41477,20 +41811,6 @@
 
 	//
 
-	Curve.create = function ( construct, getPoint ) {
-
-		console.log( 'THREE.Curve.create() has been deprecated' );
-
-		construct.prototype = Object.create( Curve.prototype );
-		construct.prototype.constructor = construct;
-		construct.prototype.getPoint = getPoint;
-
-		return construct;
-
-	};
-
-	//
-
 	function ClosedSplineCurve3( points ) {
 
 		console.warn( 'THREE.ClosedSplineCurve3 has been deprecated. Use THREE.CatmullRomCurve3 instead.' );
@@ -41503,51 +41823,6 @@
 
 	ClosedSplineCurve3.prototype = Object.create( CatmullRomCurve3.prototype );
 
-	//
-
-	function SplineCurve3( points ) {
-
-		console.warn( 'THREE.SplineCurve3 has been deprecated. Use THREE.CatmullRomCurve3 instead.' );
-
-		CatmullRomCurve3.call( this, points );
-		this.type = 'catmullrom';
-
-	}
-
-	SplineCurve3.prototype = Object.create( CatmullRomCurve3.prototype );
-
-	//
-
-	function Spline( points ) {
-
-		console.warn( 'THREE.Spline has been removed. Use THREE.CatmullRomCurve3 instead.' );
-
-		CatmullRomCurve3.call( this, points );
-		this.type = 'catmullrom';
-
-	}
-
-	Spline.prototype = Object.create( CatmullRomCurve3.prototype );
-
-	Object.assign( Spline.prototype, {
-
-		initFromArray: function ( a ) {
-
-			console.error( 'THREE.Spline: .initFromArray() has been removed.' );
-
-		},
-		getControlPointsArray: function ( optionalTarget ) {
-
-			console.error( 'THREE.Spline: .getControlPointsArray() has been removed.' );
-
-		},
-		reparametrizeByArcLength: function ( samplingCoef ) {
-
-			console.error( 'THREE.Spline: .reparametrizeByArcLength() has been removed.' );
-
-		}
-
-	} );
 
 	//
 	function BoundingBoxHelper( object, color ) {
@@ -41583,13 +41858,6 @@
 
 		console.warn( 'THREE.XHRLoader has been renamed to THREE.FileLoader.' );
 		return new FileLoader( manager );
-
-	}
-
-	function BinaryTextureLoader( manager ) {
-
-		console.warn( 'THREE.BinaryTextureLoader has been renamed to THREE.DataTextureLoader.' );
-		return new DataTextureLoader( manager );
 
 	}
 
@@ -41696,11 +41964,6 @@
 			console.warn( 'THREE.Matrix3: .applyToBuffer() has been removed. Use matrix.applyToBufferAttribute( attribute ) instead.' );
 			return this.applyToBufferAttribute( buffer );
 
-		},
-		applyToVector3Array: function( array, offset, length ) {
-
-			console.error( 'THREE.Matrix3: .applyToVector3Array() has been removed.' );
-
 		}
 
 	} );
@@ -41740,8 +42003,8 @@
 		},
 		multiplyVector3: function ( vector ) {
 
-			console.warn( 'THREE.Matrix4: .multiplyVector3() has been removed. Use vector.applyMatrix4( matrix ) instead.' );
-			return vector.applyMatrix4( this );
+			console.warn( 'THREE.Matrix4: .multiplyVector3() has been removed. Use vector.applyMatrix4( matrix ) or vector.applyProjection( matrix ) instead.' );
+			return vector.applyProjection( this );
 
 		},
 		multiplyVector4: function ( vector ) {
@@ -41797,17 +42060,6 @@
 
 			console.warn( 'THREE.Matrix4: .applyToBuffer() has been removed. Use matrix.applyToBufferAttribute( attribute ) instead.' );
 			return this.applyToBufferAttribute( buffer );
-
-		},
-		applyToVector3Array: function( array, offset, length ) {
-
-			console.error( 'THREE.Matrix4: .applyToVector3Array() has been removed.' );
-
-		},
-		makeFrustum: function( left, right, bottom, top, near, far ) {
-
-			console.warn( 'THREE.Matrix4: .makeFrustum() has been removed. Use .makePerspective( left, right, top, bottom, near, far ) instead.' );
-			return this.makePerspective( left, right, top, bottom, near, far );
 
 		}
 
@@ -41867,17 +42119,6 @@
 
 	} );
 
-	Object.assign( Vector2.prototype, {
-
-		fromAttribute: function ( attribute, index, offset ) {
-
-			console.error( 'THREE.Vector2: .fromAttribute() has been renamed to .fromBufferAttribute().' );
-			return this.fromBufferAttribute( attribute, index, offset );
-
-		}
-
-	} );
-
 	Object.assign( Vector3.prototype, {
 
 		setEulerFromRotationMatrix: function () {
@@ -41906,29 +42147,6 @@
 
 			console.warn( 'THREE.Vector3: .getColumnFromMatrix() has been renamed to .setFromMatrixColumn().' );
 			return this.setFromMatrixColumn( matrix, index );
-
-		},
-		applyProjection: function ( m ) {
-
-			console.warn( 'THREE.Vector3: .applyProjection() has been removed. Use .applyMatrix4( m ) instead.' );
-			return this.applyMatrix4( m );
-
-		},
-		fromAttribute: function ( attribute, index, offset ) {
-
-			console.error( 'THREE.Vector3: .fromAttribute() has been renamed to .fromBufferAttribute().' );
-			return this.fromBufferAttribute( attribute, index, offset );
-
-		}
-
-	} );
-
-	Object.assign( Vector4.prototype, {
-
-		fromAttribute: function ( attribute, index, offset ) {
-
-			console.error( 'THREE.Vector4: .fromAttribute() has been renamed to .fromBufferAttribute().' );
-			return this.fromBufferAttribute( attribute, index, offset );
 
 		}
 
@@ -42285,6 +42503,25 @@
 		}
 
 	} );
+
+	//
+
+	EventDispatcher.prototype = Object.assign( Object.create( {
+
+		// Note: Extra base ensures these properties are not 'assign'ed.
+
+		constructor: EventDispatcher,
+
+		apply: function ( target ) {
+
+			console.warn( "THREE.EventDispatcher: .apply is deprecated, " +
+					"just inherit or Object.assign the prototype to mix-in." );
+
+			Object.assign( target, this );
+
+		}
+
+	} ), EventDispatcher.prototype );
 
 	//
 
@@ -42749,6 +42986,7 @@
 	exports.DepthTexture = DepthTexture;
 	exports.Texture = Texture;
 	exports.CompressedTextureLoader = CompressedTextureLoader;
+	exports.BinaryTextureLoader = BinaryTextureLoader;
 	exports.DataTextureLoader = DataTextureLoader;
 	exports.CubeTextureLoader = CubeTextureLoader;
 	exports.TextureLoader = TextureLoader;
@@ -42818,6 +43056,7 @@
 	exports.CubicInterpolant = CubicInterpolant;
 	exports.Interpolant = Interpolant;
 	exports.Triangle = Triangle;
+	exports.Spline = Spline;
 	exports.Math = _Math;
 	exports.Spherical = Spherical;
 	exports.Cylindrical = Cylindrical;
@@ -42853,6 +43092,7 @@
 	exports.ArrowHelper = ArrowHelper;
 	exports.AxisHelper = AxisHelper;
 	exports.CatmullRomCurve3 = CatmullRomCurve3;
+	exports.SplineCurve3 = SplineCurve3;
 	exports.CubicBezierCurve3 = CubicBezierCurve3;
 	exports.QuadraticBezierCurve3 = QuadraticBezierCurve3;
 	exports.LineCurve3 = LineCurve3;
@@ -42863,13 +43103,14 @@
 	exports.QuadraticBezierCurve = QuadraticBezierCurve;
 	exports.LineCurve = LineCurve;
 	exports.Shape = Shape;
-	exports.Path = Path;
 	exports.ShapePath = ShapePath;
+	exports.Path = Path;
 	exports.Font = Font;
 	exports.CurvePath = CurvePath;
 	exports.Curve = Curve;
 	exports.ShapeUtils = ShapeUtils;
 	exports.SceneUtils = SceneUtils;
+	exports.CurveUtils = CurveUtils;
 	exports.WireframeGeometry = WireframeGeometry;
 	exports.ParametricGeometry = ParametricGeometry;
 	exports.ParametricBufferGeometry = ParametricBufferGeometry;
@@ -42890,12 +43131,12 @@
 	exports.TorusGeometry = TorusGeometry;
 	exports.TorusBufferGeometry = TorusBufferGeometry;
 	exports.TextGeometry = TextGeometry;
-	exports.SphereGeometry = SphereGeometry;
 	exports.SphereBufferGeometry = SphereBufferGeometry;
+	exports.SphereGeometry = SphereGeometry;
 	exports.RingGeometry = RingGeometry;
 	exports.RingBufferGeometry = RingBufferGeometry;
-	exports.PlaneGeometry = PlaneGeometry;
 	exports.PlaneBufferGeometry = PlaneBufferGeometry;
+	exports.PlaneGeometry = PlaneGeometry;
 	exports.LatheGeometry = LatheGeometry;
 	exports.LatheBufferGeometry = LatheBufferGeometry;
 	exports.ShapeGeometry = ShapeGeometry;
@@ -42906,10 +43147,10 @@
 	exports.ConeBufferGeometry = ConeBufferGeometry;
 	exports.CylinderGeometry = CylinderGeometry;
 	exports.CylinderBufferGeometry = CylinderBufferGeometry;
-	exports.CircleGeometry = CircleGeometry;
 	exports.CircleBufferGeometry = CircleBufferGeometry;
-	exports.BoxGeometry = BoxGeometry;
+	exports.CircleGeometry = CircleGeometry;
 	exports.BoxBufferGeometry = BoxBufferGeometry;
+	exports.BoxGeometry = BoxGeometry;
 	exports.ShadowMaterial = ShadowMaterial;
 	exports.SpriteMaterial = SpriteMaterial;
 	exports.RawShaderMaterial = RawShaderMaterial;
@@ -42962,6 +43203,7 @@
 	exports.SubtractiveBlending = SubtractiveBlending;
 	exports.MultiplyBlending = MultiplyBlending;
 	exports.CustomBlending = CustomBlending;
+	exports.BlendingMode = BlendingMode;
 	exports.AddEquation = AddEquation;
 	exports.SubtractEquation = SubtractEquation;
 	exports.ReverseSubtractEquation = ReverseSubtractEquation;
@@ -43002,15 +43244,18 @@
 	exports.SphericalReflectionMapping = SphericalReflectionMapping;
 	exports.CubeUVReflectionMapping = CubeUVReflectionMapping;
 	exports.CubeUVRefractionMapping = CubeUVRefractionMapping;
+	exports.TextureMapping = TextureMapping;
 	exports.RepeatWrapping = RepeatWrapping;
 	exports.ClampToEdgeWrapping = ClampToEdgeWrapping;
 	exports.MirroredRepeatWrapping = MirroredRepeatWrapping;
+	exports.TextureWrapping = TextureWrapping;
 	exports.NearestFilter = NearestFilter;
 	exports.NearestMipMapNearestFilter = NearestMipMapNearestFilter;
 	exports.NearestMipMapLinearFilter = NearestMipMapLinearFilter;
 	exports.LinearFilter = LinearFilter;
 	exports.LinearMipMapNearestFilter = LinearMipMapNearestFilter;
 	exports.LinearMipMapLinearFilter = LinearMipMapLinearFilter;
+	exports.TextureFilter = TextureFilter;
 	exports.UnsignedByteType = UnsignedByteType;
 	exports.ByteType = ByteType;
 	exports.ShortType = ShortType;
@@ -43085,13 +43330,10 @@
 	exports.Float32Attribute = Float32Attribute;
 	exports.Float64Attribute = Float64Attribute;
 	exports.ClosedSplineCurve3 = ClosedSplineCurve3;
-	exports.SplineCurve3 = SplineCurve3;
-	exports.Spline = Spline;
 	exports.BoundingBoxHelper = BoundingBoxHelper;
 	exports.EdgesHelper = EdgesHelper;
 	exports.WireframeHelper = WireframeHelper;
 	exports.XHRLoader = XHRLoader;
-	exports.BinaryTextureLoader = BinaryTextureLoader;
 	exports.GeometryUtils = GeometryUtils;
 	exports.ImageUtils = ImageUtils;
 	exports.Projector = Projector;

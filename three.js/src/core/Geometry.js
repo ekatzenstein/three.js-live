@@ -19,9 +19,6 @@ import { _Math } from '../math/Math';
  * @author bhouston / http://clara.io
  */
 
-var count = 0;
-function GeometryIdCount() { return count++; };
-
 function Geometry() {
 
 	Object.defineProperty( this, 'id', { value: GeometryIdCount() } );
@@ -34,7 +31,7 @@ function Geometry() {
 	this.vertices = [];
 	this.colors = [];
 	this.faces = [];
-	this.faceVertexUvs = [[]];
+	this.faceVertexUvs = [ [] ];
 
 	this.morphTargets = [];
 	this.morphNormals = [];
@@ -59,9 +56,7 @@ function Geometry() {
 
 }
 
-Geometry.prototype = {
-
-	constructor: Geometry,
+Object.assign( Geometry.prototype, EventDispatcher.prototype, {
 
 	isGeometry: true,
 
@@ -313,7 +308,7 @@ Geometry.prototype = {
 
 					for ( var j = start, jl = start + count; j < jl; j += 3 ) {
 
-						addFace( indices[ j ], indices[ j + 1 ], indices[ j + 2 ], group.materialIndex );
+						addFace( indices[ j ], indices[ j + 1 ], indices[ j + 2 ], group.materialIndex  );
 
 					}
 
@@ -706,7 +701,7 @@ Geometry.prototype = {
 
 	merge: function ( geometry, matrix, materialIndexOffset ) {
 
-		if ( ( geometry && geometry.isGeometry ) === false ) {
+		if ( (geometry && geometry.isGeometry) === false ) {
 
 			console.error( 'THREE.Geometry.merge(): geometry not an instance of THREE.Geometry.', geometry );
 			return;
@@ -826,7 +821,7 @@ Geometry.prototype = {
 
 	mergeMesh: function ( mesh ) {
 
-		if ( ( mesh && mesh.isMesh ) === false ) {
+		if ( (mesh && mesh.isMesh) === false ) {
 
 			console.error( 'THREE.Geometry.mergeMesh(): mesh not an instance of THREE.Mesh.', mesh );
 			return;
@@ -891,12 +886,15 @@ Geometry.prototype = {
 
 			indices = [ face.a, face.b, face.c ];
 
+			var dupIndex = - 1;
+
 			// if any duplicate vertices are found in a Face3
 			// we have to remove the face as nothing can be saved
 			for ( var n = 0; n < 3; n ++ ) {
 
 				if ( indices[ n ] === indices[ ( n + 1 ) % 3 ] ) {
 
+					dupIndex = n;
 					faceIndicesToRemove.push( i );
 					break;
 
@@ -1267,8 +1265,10 @@ Geometry.prototype = {
 
 	}
 
-};
+} );
 
-Object.assign( Geometry.prototype, EventDispatcher.prototype );
+var count = 0;
+function GeometryIdCount() { return count++; };
+
 
 export { GeometryIdCount, Geometry };

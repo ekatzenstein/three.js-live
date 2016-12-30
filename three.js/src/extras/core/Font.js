@@ -1,11 +1,10 @@
+import { ShapeUtils } from '../ShapeUtils';
+import { ShapePath } from './Path';
+
 /**
  * @author zz85 / http://www.lab4games.net/zz85/blog
  * @author mrdoob / http://mrdoob.com/
  */
-
-import { QuadraticBezier, CubicBezier } from './Interpolations';
-import { ShapePath } from './ShapePath';
-
 
 function Font( data ) {
 
@@ -48,7 +47,7 @@ Object.assign( Font.prototype, {
 
 			var path = new ShapePath();
 
-			var pts = [];
+			var pts = [], b2 = ShapeUtils.b2, b3 = ShapeUtils.b3;
 			var x, y, cpx, cpy, cpx0, cpy0, cpx1, cpy1, cpx2, cpy2, laste;
 
 			if ( glyph.o ) {
@@ -98,8 +97,8 @@ Object.assign( Font.prototype, {
 								for ( var i2 = 1; i2 <= divisions; i2 ++ ) {
 
 									var t = i2 / divisions;
-									QuadraticBezier( t, cpx0, cpx1, cpx );
-									QuadraticBezier( t, cpy0, cpy1, cpy );
+									b2( t, cpx0, cpx1, cpx );
+									b2( t, cpy0, cpy1, cpy );
 
 								}
 
@@ -128,8 +127,8 @@ Object.assign( Font.prototype, {
 								for ( var i2 = 1; i2 <= divisions; i2 ++ ) {
 
 									var t = i2 / divisions;
-									CubicBezier( t, cpx0, cpx1, cpx2, cpx );
-									CubicBezier( t, cpy0, cpy1, cpy2, cpy );
+									b3( t, cpx0, cpx1, cpx2, cpx );
+									b3( t, cpy0, cpy1, cpy2, cpy );
 
 								}
 

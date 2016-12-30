@@ -27,14 +27,12 @@ function AnimationMixer( root ) {
 
 }
 
-AnimationMixer.prototype = {
-
-	constructor: AnimationMixer,
+Object.assign( AnimationMixer.prototype, EventDispatcher.prototype, {
 
 	// return an action for a clip optionally using a custom root target
 	// object (this method allocates a lot of dynamic memory in case a
 	// previously unknown clip/root combination is specified)
-	clipAction: function ( clip, optionalRoot ) {
+	clipAction: function( clip, optionalRoot ) {
 
 		var root = optionalRoot || this._root,
 			rootUuid = root.uuid,
@@ -84,7 +82,7 @@ AnimationMixer.prototype = {
 	},
 
 	// get an existing action
-	existingAction: function ( clip, optionalRoot ) {
+	existingAction: function( clip, optionalRoot ) {
 
 		var root = optionalRoot || this._root,
 			rootUuid = root.uuid,
@@ -107,7 +105,7 @@ AnimationMixer.prototype = {
 	},
 
 	// deactivates all previously scheduled actions
-	stopAllAction: function () {
+	stopAllAction: function() {
 
 		var actions = this._actions,
 			nActions = this._nActiveActions,
@@ -134,7 +132,7 @@ AnimationMixer.prototype = {
 	},
 
 	// advance the time and update apply the animation
-	update: function ( deltaTime ) {
+	update: function( deltaTime ) {
 
 		deltaTime *= this.timeScale;
 
@@ -176,14 +174,14 @@ AnimationMixer.prototype = {
 	},
 
 	// return this mixer's root target object
-	getRoot: function () {
+	getRoot: function() {
 
 		return this._root;
 
 	},
 
 	// free all resources specific to a particular clip
-	uncacheClip: function ( clip ) {
+	uncacheClip: function( clip ) {
 
 		var actions = this._actions,
 			clipUuid = clip.uuid,
@@ -225,7 +223,7 @@ AnimationMixer.prototype = {
 	},
 
 	// free all resources specific to a particular root target object
-	uncacheRoot: function ( root ) {
+	uncacheRoot: function( root ) {
 
 		var rootUuid = root.uuid,
 			actionsByClip = this._actionsByClip;
@@ -262,7 +260,7 @@ AnimationMixer.prototype = {
 	},
 
 	// remove a targeted clip from the cache
-	uncacheAction: function ( clip, optionalRoot ) {
+	uncacheAction: function( clip, optionalRoot ) {
 
 		var action = this.existingAction( clip, optionalRoot );
 
@@ -275,13 +273,13 @@ AnimationMixer.prototype = {
 
 	}
 
-};
+} );
 
 // Implementation details:
 
 Object.assign( AnimationMixer.prototype, {
 
-	_bindAction: function ( action, prototypeAction ) {
+	_bindAction: function( action, prototypeAction ) {
 
 		var root = action._localRoot || this._root,
 			tracks = action._clip.tracks,
@@ -348,7 +346,7 @@ Object.assign( AnimationMixer.prototype, {
 
 	},
 
-	_activateAction: function ( action ) {
+	_activateAction: function( action ) {
 
 		if ( ! this._isActiveAction( action ) ) {
 
@@ -390,7 +388,7 @@ Object.assign( AnimationMixer.prototype, {
 
 	},
 
-	_deactivateAction: function ( action ) {
+	_deactivateAction: function( action ) {
 
 		if ( this._isActiveAction( action ) ) {
 
@@ -418,7 +416,7 @@ Object.assign( AnimationMixer.prototype, {
 
 	// Memory manager
 
-	_initMemoryManager: function () {
+	_initMemoryManager: function() {
 
 		this._actions = []; // 'nActiveActions' followed by inactive ones
 		this._nActiveActions = 0;
@@ -463,14 +461,14 @@ Object.assign( AnimationMixer.prototype, {
 
 	// Memory management for AnimationAction objects
 
-	_isActiveAction: function ( action ) {
+	_isActiveAction: function( action ) {
 
 		var index = action._cacheIndex;
 		return index !== null && index < this._nActiveActions;
 
 	},
 
-	_addInactiveAction: function ( action, clipUuid, rootUuid ) {
+	_addInactiveAction: function( action, clipUuid, rootUuid ) {
 
 		var actions = this._actions,
 			actionsByClip = this._actionsByClip,
@@ -505,7 +503,7 @@ Object.assign( AnimationMixer.prototype, {
 
 	},
 
-	_removeInactiveAction: function ( action ) {
+	_removeInactiveAction: function( action ) {
 
 		var actions = this._actions,
 			lastInactiveAction = actions[ actions.length - 1 ],
@@ -550,7 +548,7 @@ Object.assign( AnimationMixer.prototype, {
 
 	},
 
-	_removeInactiveBindingsForAction: function ( action ) {
+	_removeInactiveBindingsForAction: function( action ) {
 
 		var bindings = action._propertyBindings;
 		for ( var i = 0, n = bindings.length; i !== n; ++ i ) {
@@ -567,7 +565,7 @@ Object.assign( AnimationMixer.prototype, {
 
 	},
 
-	_lendAction: function ( action ) {
+	_lendAction: function( action ) {
 
 		// [ active actions |  inactive actions  ]
 		// [  active actions >| inactive actions ]
@@ -590,7 +588,7 @@ Object.assign( AnimationMixer.prototype, {
 
 	},
 
-	_takeBackAction: function ( action ) {
+	_takeBackAction: function( action ) {
 
 		// [  active actions  | inactive actions ]
 		// [ active actions |< inactive actions  ]
@@ -615,7 +613,7 @@ Object.assign( AnimationMixer.prototype, {
 
 	// Memory management for PropertyMixer objects
 
-	_addInactiveBinding: function ( binding, rootUuid, trackName ) {
+	_addInactiveBinding: function( binding, rootUuid, trackName ) {
 
 		var bindingsByRoot = this._bindingsByRootAndName,
 			bindingByName = bindingsByRoot[ rootUuid ],
@@ -636,7 +634,7 @@ Object.assign( AnimationMixer.prototype, {
 
 	},
 
-	_removeInactiveBinding: function ( binding ) {
+	_removeInactiveBinding: function( binding ) {
 
 		var bindings = this._bindings,
 			propBinding = binding.binding,
@@ -664,7 +662,7 @@ Object.assign( AnimationMixer.prototype, {
 
 	},
 
-	_lendBinding: function ( binding ) {
+	_lendBinding: function( binding ) {
 
 		var bindings = this._bindings,
 			prevIndex = binding._cacheIndex,
@@ -681,7 +679,7 @@ Object.assign( AnimationMixer.prototype, {
 
 	},
 
-	_takeBackBinding: function ( binding ) {
+	_takeBackBinding: function( binding ) {
 
 		var bindings = this._bindings,
 			prevIndex = binding._cacheIndex,
@@ -701,7 +699,7 @@ Object.assign( AnimationMixer.prototype, {
 
 	// Memory management of Interpolants for weight and time scale
 
-	_lendControlInterpolant: function () {
+	_lendControlInterpolant: function() {
 
 		var interpolants = this._controlInterpolants,
 			lastActiveIndex = this._nActiveControlInterpolants ++,
@@ -722,7 +720,7 @@ Object.assign( AnimationMixer.prototype, {
 
 	},
 
-	_takeBackControlInterpolant: function ( interpolant ) {
+	_takeBackControlInterpolant: function( interpolant ) {
 
 		var interpolants = this._controlInterpolants,
 			prevIndex = interpolant.__cacheIndex,
@@ -743,6 +741,5 @@ Object.assign( AnimationMixer.prototype, {
 
 } );
 
-Object.assign( AnimationMixer.prototype, EventDispatcher.prototype );
 
 export { AnimationMixer };

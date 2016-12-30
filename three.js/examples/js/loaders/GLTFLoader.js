@@ -50,7 +50,7 @@ THREE.GLTFLoader = ( function () {
 			var parser = new GLTFParser( json, {
 
 				path: path || this.path,
-				crossOrigin: this.crossOrigin
+				crossOrigin: !! this.crossOrigin
 
 			} );
 
@@ -301,7 +301,6 @@ THREE.GLTFLoader = ( function () {
 		REPEAT: 10497,
 		SAMPLER_2D: 35678,
 		TRIANGLES: 4,
-		LINES: 1,
 		UNSIGNED_BYTE: 5121,
 		UNSIGNED_SHORT: 5123,
 
@@ -793,7 +792,7 @@ THREE.GLTFLoader = ( function () {
 
 					}
 
-					textureLoader.setCrossOrigin( options.crossOrigin );
+					textureLoader.crossOrigin = options.crossOrigin || false;
 
 					textureLoader.load( resolveURL( source.uri, options.path ), function ( _texture ) {
 
@@ -1155,8 +1154,6 @@ THREE.GLTFLoader = ( function () {
 				var group = new THREE.Object3D();
 				group.name = mesh.name;
 
-				if ( mesh.extras ) group.userData = mesh.extras;
-
 				var primitives = mesh.primitives;
 
 				for ( var name in primitives ) {
@@ -1207,68 +1204,33 @@ THREE.GLTFLoader = ( function () {
 
 						if ( primitive.indices ) {
 
-							geometry.setIndex( dependencies.accessors[ primitive.indices ] );
+							var indexArray = dependencies.accessors[ primitive.indices ];
+
+							geometry.setIndex( indexArray );
+
+							var offset = {
+								start: 0,
+								index: 0,
+								count: indexArray.count
+							};
+
+							geometry.groups.push( offset );
+
+							geometry.computeBoundingSphere();
 
 						}
+
 
 						var material = dependencies.materials[ primitive.material ];
 
 						var meshNode = new THREE.Mesh( geometry, material );
 						meshNode.castShadow = true;
 
-						if ( primitive.extras ) meshNode.userData = primitive.extras;
-
-						group.add( meshNode );
-
-					} else if ( primitive.mode === WEBGL_CONSTANTS.LINES ) {
-
-						var geometry = new THREE.BufferGeometry();
-
-						var attributes = primitive.attributes;
-
-						_each( attributes, function ( attributeEntry, attributeId ) {
-
-							if ( ! attributeEntry ) return;
-
-							var bufferAttribute = dependencies.accessors[ attributeEntry ];
-
-							switch ( attributeId ) {
-
-								case 'POSITION':
-									geometry.addAttribute( 'position', bufferAttribute );
-									break;
-
-								case 'COLOR':
-									geometry.addAttribute( 'color', bufferAttribute );
-									break;
-
-							}
-
-						} );
-
-						var material = dependencies.materials[ primitive.material ];
-
-						var meshNode;
-
-						if ( primitive.indices ) {
-
-							geometry.setIndex( dependencies.accessors[ primitive.indices ] );
-
-							meshNode = new THREE.LineSegments( geometry, material );
-
-						} else {
-
-							meshNode = new THREE.Line( geometry, material );
-
-						}
-
-						if ( primitive.extras ) meshNode.userData = primitive.extras;
-
 						group.add( meshNode );
 
 					} else {
 
-						console.warn( "Only triangular and line primitives are supported" );
+						console.warn( "Non-triangular primitives are not supported" );
 
 					}
 
@@ -1305,16 +1267,12 @@ THREE.GLTFLoader = ( function () {
 				var _camera = new THREE.PerspectiveCamera( THREE.Math.radToDeg( xfov ), aspect_ratio, camera.perspective.znear || 1, camera.perspective.zfar || 2e6 );
 				_camera.name = camera.name;
 
-				if ( camera.extras ) _camera.userData = camera.extras;
-
 				return _camera;
 
 			} else if ( camera.type == "orthographic" && camera.orthographic ) {
 
 				var _camera = new THREE.OrthographicCamera( window.innerWidth / - 2, window.innerWidth / 2, window.innerHeight / 2, window.innerHeight / - 2, camera.orthographic.znear, camera.orthographic.zfar );
 				_camera.name = camera.name;
-
-				if ( camera.extras ) _camera.userData = camera.extras;
 
 				return _camera;
 
@@ -1432,8 +1390,6 @@ THREE.GLTFLoader = ( function () {
 
 			_node.name = node.name;
 
-			if ( node.extras ) _node.userData = node.extras;
-
 			_node.matrixAutoUpdate = false;
 
 			if ( node.matrix !== undefined ) {
@@ -1487,13 +1443,6 @@ THREE.GLTFLoader = ( function () {
 							var mesh = node.meshes[ meshId ];
 							var group = dependencies.meshes[ mesh ];
 
-							if ( group === undefined ) {
-
-								console.warn( 'GLTFLoader: Couldn\'t find node "' + mesh + '".' );
-								continue;
-
-							}
-
 							for ( var childrenId in group.children ) {
 
 								var child = group.children[ childrenId ];
@@ -1502,7 +1451,6 @@ THREE.GLTFLoader = ( function () {
 
 								var originalMaterial = child.material;
 								var originalGeometry = child.geometry;
-								var originalUserData = child.userData;
 
 								var material;
 
@@ -1516,23 +1464,8 @@ THREE.GLTFLoader = ( function () {
 
 								}
 
-								switch ( child.type ) {
-
-									case 'LineSegments':
-										child = new THREE.LineSegments( originalGeometry, material );
-										break;
-
-									case 'Line':
-										child = new THREE.Line( originalGeometry, material );
-										break;
-
-									default:
-										child = new THREE.Mesh( originalGeometry, material );
-
-								}
-
+								child = new THREE.Mesh( originalGeometry, material );
 								child.castShadow = true;
-								child.userData = originalUserData;
 
 								var skinEntry;
 
@@ -1551,7 +1484,6 @@ THREE.GLTFLoader = ( function () {
 
 									child = new THREE.SkinnedMesh( geometry, material, false );
 									child.castShadow = true;
-									child.userData = originalUserData;
 
 									var bones = [];
 									var boneInverses = [];
@@ -1734,8 +1666,6 @@ THREE.GLTFLoader = ( function () {
 
 				var _scene = new THREE.Scene();
 				_scene.name = scene.name;
-
-				if ( scene.extras ) _scene.userData = scene.extras;
 
 				var nodes = scene.nodes;
 

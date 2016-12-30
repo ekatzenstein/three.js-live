@@ -4,16 +4,6 @@
 
 Menubar.File = function ( editor ) {
 
-	var NUMBER_PRECISION = 6;
-
-	function parseNumber( key, value ) {
-
-		return typeof value === 'number' ? parseFloat( value.toFixed( NUMBER_PRECISION ) ) : value;
-
-	}
-
-	//
-
 	var container = new UI.Panel();
 	container.setClass( 'menu' );
 
@@ -99,7 +89,7 @@ Menubar.File = function ( editor ) {
 
 		try {
 
-			output = JSON.stringify( output, parseNumber, '\t' );
+			output = JSON.stringify( output, null, '\t' );
 			output = output.replace( /[\n\t]+([\d\.e\-\[\]]+)/g, '$1' );
 
 		} catch ( e ) {
@@ -133,7 +123,7 @@ Menubar.File = function ( editor ) {
 
 		try {
 
-			output = JSON.stringify( output, parseNumber, '\t' );
+			output = JSON.stringify( output, null, '\t' );
 			output = output.replace( /[\n\t]+([\d\.e\-\[\]]+)/g, '$1' );
 
 		} catch ( e ) {
@@ -158,7 +148,7 @@ Menubar.File = function ( editor ) {
 
 		try {
 
-			output = JSON.stringify( output, parseNumber, '\t' );
+			output = JSON.stringify( output, null, '\t' );
 			output = output.replace( /[\n\t]+([\d\.e\-\[\]]+)/g, '$1' );
 
 		} catch ( e ) {
@@ -230,7 +220,7 @@ Menubar.File = function ( editor ) {
 
 		var vr = output.project.vr;
 
-		output = JSON.stringify( output, parseNumber, '\t' );
+		output = JSON.stringify( output, null, '\t' );
 		output = output.replace( /[\n\t]+([\d\.e\-\[\]]+)/g, '$1' );
 
 		zip.file( 'app.json', output );

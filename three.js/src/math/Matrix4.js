@@ -448,6 +448,30 @@ Matrix4.prototype = {
 
 	},
 
+	applyToVector3Array: function () {
+
+		var v1;
+
+		return function applyToVector3Array( array, offset, length ) {
+
+			if ( v1 === undefined ) v1 = new Vector3();
+			if ( offset === undefined ) offset = 0;
+			if ( length === undefined ) length = array.length;
+
+			for ( var i = 0, j = offset; i < length; i += 3, j += 3 ) {
+
+				v1.fromArray( array, j );
+				v1.applyMatrix4( this );
+				v1.toArray( array, j );
+
+			}
+
+			return array;
+
+		};
+
+	}(),
+
 	applyToBufferAttribute: function () {
 
 		var v1;
@@ -833,13 +857,7 @@ Matrix4.prototype = {
 
 	}(),
 
-	makePerspective: function ( left, right, top, bottom, near, far ) {
-
-		if ( far === undefined ) {
-
-			console.warn( 'THREE.Matrix4: .makePerspective() has been redefined and has a new signature. Please check the docs.' );
-
-		}
+	makeFrustum: function ( left, right, bottom, top, near, far ) {
 
 		var te = this.elements;
 		var x = 2 * near / ( right - left );
@@ -856,6 +874,17 @@ Matrix4.prototype = {
 		te[ 3 ] = 0;	te[ 7 ] = 0;	te[ 11 ] = - 1;	te[ 15 ] = 0;
 
 		return this;
+
+	},
+
+	makePerspective: function ( fov, aspect, near, far ) {
+
+		var ymax = near * Math.tan( _Math.DEG2RAD * fov * 0.5 );
+		var ymin = - ymax;
+		var xmin = ymin * aspect;
+		var xmax = ymax * aspect;
+
+		return this.makeFrustum( xmin, xmax, ymin, ymax, near, far );
 
 	},
 

@@ -193,7 +193,8 @@ PerspectiveCamera.prototype = Object.assign( Object.create( Camera.prototype ), 
 		var skew = this.filmOffset;
 		if ( skew !== 0 ) left += near * skew / this.getFilmWidth();
 
-		this.projectionMatrix.makePerspective( left, left + width, top, top - height, near, this.far );
+		this.projectionMatrix.makeFrustum(
+				left, left + width, top - height, top, near, this.far );
 
 	},
 
