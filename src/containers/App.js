@@ -93,24 +93,16 @@ class App extends Component {
         url_path = url_path === 'three.js/examples//.html' ? 'home.html' : url_path;
         const _this = this;
         axios.get(url_path).then(function(response) {
-            let newcode = response.data.replace('<head>', `<head><base href="./three.js/examples/" target="_blank">`);
-            newcode=newcode.replace('requestAnimationFrame','window.parent.three_live=requestAnimationFrame');
+            const newcode = response.data.replace('<head>', `<head><base href="./three.js/examples/" target="_blank">`);
             _this.props.actions.updateCode(newcode,_this.props.location.pathname)
             _this._updateCanvas();
         }).catch(function(error) {
             console.log(error);
         });
     }
-    _resetAnimationFrame(){
-        //disables abnormally high frame rates
-        if(window.three_live){
-            var previewWindow = document.getElementById('preview').contentWindow;
-            previewWindow.cancelAnimationFrame(window.three_live);
-        }
-    }
+
 
     render(props) {
-        this._resetAnimationFrame();
         return (
             <div className="App">
                 <div style={{
