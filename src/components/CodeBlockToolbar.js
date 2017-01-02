@@ -29,7 +29,7 @@ const style=(props)=>(
       textAlign:'center',
       width:props.codeControlWidth
     },
-    sliderStyle:{
+    sliderStyle:{ 
       margin:'auto',
       textAlign:'center',
       width:props.codeControlWidth
@@ -49,7 +49,6 @@ const CodeBlockToolbar = (props) => {
     >
     <div style={styles.toolbarStyle}>
       <ButtonUpdate refresh={props.refresh}/>
-      <br/>
       <div className='standard' style={styles.buttonStyle}>Update</div>
       <SliderTransparency update={props.cbTransparency} transparency={props.transparency}/>
       <br/>
