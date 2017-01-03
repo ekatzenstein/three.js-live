@@ -101,6 +101,7 @@ class App extends Component {
     }
 
     _setCode(url_path) {
+      console.log(url_path)
         url_path = url_path === 'three.js/examples//.html' ? 'home.html' : url_path;
         const _this = this;
         axios.get(url_path).then(function(response) {
