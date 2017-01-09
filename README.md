@@ -6,7 +6,7 @@
     <br/>
     <h2>About</h2>
     <p>
-        <a href="https://github.com/ekatzenstein/three.js-live" target="_blank">three.js / live </a> is an open-source, in progress experiment. Check out <a href="http://www.manuscript.nyc/" target="_blank">manuscript</a> for more info.
+        <a href="https://github.com/ekatzenstein/three.js-live" target="_blank">three.js / live </a> is an open-source, in progress experiment. Check out <a href="http://www.manuscript.nyc/" target="_blank">manuscript</a> for more info. Also, check out the sibling project with D3js to up your data visualization game: <a href="http://d3js.live" target="_blank">d3js.live</a>.
         <br/>
         <br/> This tool is built using <a href='https://facebook.github.io/react/' target='_blank'>React</a> and <a href='http://redux.js.org/' target='_blank'>Redux</a>. The code block is created with <a href='https://github.com/JedWatson/react-codemirror'
             target='_blank'>react-codemirror</a>, built on top of the awesome
