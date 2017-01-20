@@ -1,4 +1,4 @@
-   <h1><a href="http://threejs.live/" target="_blank" style='font-family:"Raleway", sans-serif;'>three.js / live</a></h1> (<a href="https://github.com/mrdoob/three.js/releases/tag/r84" target="_blank>r84</a>)
+   <h1><a href="http://threejs.live/" target="_blank" style='font-family:"Raleway", sans-serif;'>three.js / live</a></h1> <a href="https://github.com/mrdoob/three.js/releases/tag/r84" target="_blank>(r84)</a>
     <h2>Getting Started</h2>
     <p>Activate the "Code" button in the header to view the html file and edit. Select example files from the sidebar to get started with interactive demos.</p>
        <br/>  
