@@ -1,0 +1,4 @@
+This is a Brave Rewards publisher verification file.
+
+Domain: threejs.live 
+Token: 4a42627ae5a434a1055eb5dbf25deec735f4781f77ab62e6ea71fd435cc453ef
